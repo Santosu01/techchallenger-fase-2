@@ -1,0 +1,47 @@
+name: togglemaster
+# root docker-compose.yml (Full Stack Orchestration)
+
+networks:
+  auth-db-net:
+  flag-db-net:
+  targeting-db-net:
+  infra-net:
+  service-backbone:
+  togglemaster-network:
+    driver: bridge
+
+include:
+  - docker-compose.infra.yml
+  - auth-service/docker-compose.yml
+  - flag-service/docker-compose.yml
+  - targeting-service/docker-compose.yml
+  - evaluation-service/docker-compose.yml
+  - analytics-service/docker-compose.yml
+
+# Expose databases to host only in full stack mode to avoid standalone conflicts
+services:
+  auth-postgres:
+    ports:
+      - "5432:5432"
+  flag-postgres:
+    ports:
+      - "5433:5432"
+  targeting-postgres:
+    ports:
+      - "5434:5432"
+
+  auth-app:
+    ports:
+      - "8001:8001"
+  flag-app:
+    ports:
+      - "8002:8002"
+  targeting-app:
+    ports:
+      - "8003:8003"
+  evaluation-app:
+    ports:
+      - "8004:8004"
+  analytics-app:
+    ports:
+      - "8006:8006"

@@ -1,0 +1,31 @@
+name: togglemaster
+# analytics-service docker-compose.yml
+
+networks:
+  infra-net:
+  service-backbone:
+
+services:
+  analytics-app:
+    build: .
+    networks:
+      - infra-net
+      - service-backbone
+    depends_on:
+      evaluation-app:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+      shared-dynamodb:
+        condition: service_healthy
+    env_file:
+      - .env
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:8006/health || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5

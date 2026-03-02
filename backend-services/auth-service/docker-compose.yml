@@ -1,0 +1,52 @@
+name: togglemaster
+# auth-service docker-compose.yml
+
+networks:
+  auth-db-net:
+  service-backbone:
+
+services:
+  auth-postgres:
+    image: postgres:15-alpine
+    networks:
+      - auth-db-net
+    env_file:
+      - .env
+    # No host port mapping to avoid conflicts when included. Use root compose for host access.
+    expose:
+      - "5432"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - auth_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER:-user} -d $${POSTGRES_DB:-auth_db}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-app:
+    build: .
+    networks:
+      - auth-db-net
+      - service-backbone
+    depends_on:
+      auth-postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:8001/health || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  auth_postgres_data:

@@ -1,0 +1,59 @@
+name: togglemaster
+# Centralized Infrastructure and Shared Resources
+
+networks:
+  infra-net:
+  service-backbone:
+
+services:
+  shared-redis:
+    image: redis:alpine
+    container_name: shared-redis
+    networks:
+      - infra-net
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  localstack:
+    image: localstack/localstack
+    container_name: localstack
+    networks:
+      - infra-net
+      - service-backbone
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=sqs
+      - DEFAULT_REGION=us-east-1
+    volumes:
+      - ./infra/localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
+    healthcheck:
+      test: ["CMD-SHELL", "awslocal --version"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  shared-dynamodb:
+    image: amazon/dynamodb-local
+    container_name: shared-dynamodb
+    networks:
+      - infra-net
+    ports:
+      - "8000:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
+    volumes:
+      - ./infra/dynamodb:/home/dynamodblocal/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "timeout 1s bash -c ':> /dev/tcp/127.0.0.1/8000' || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5

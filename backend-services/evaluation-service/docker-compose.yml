@@ -1,0 +1,36 @@
+name: togglemaster
+# evaluation-service docker-compose.yml
+
+networks:
+  infra-net:
+  service-backbone:
+
+services:
+  evaluation-app:
+    build:
+      context: .
+    networks:
+      - infra-net
+      - service-backbone
+    depends_on:
+      shared-redis:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+      auth-app:
+        condition: service_healthy
+      flag-app:
+        condition: service_healthy
+      targeting-app:
+        condition: service_healthy
+    env_file:
+      - .env
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:8004/health || exit 1",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 5

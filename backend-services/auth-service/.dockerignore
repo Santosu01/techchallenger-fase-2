@@ -1,0 +1,7 @@
+.git
+.env
+vendor
+*.exe
+*.test
+__debug_bin
+main

@@ -1,0 +1,54 @@
+name: togglemaster
+# targeting-service docker-compose.yml
+
+networks:
+  targeting-db-net:
+  service-backbone:
+
+services:
+  targeting-postgres:
+    image: postgres:15-alpine
+    networks:
+      - targeting-db-net
+    env_file:
+      - .env
+    # No host port mapping to avoid conflicts when included.
+    expose:
+      - "5432"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - targeting_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER:-user} -d $${POSTGRES_DB:-targeting_db}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  targeting-app:
+    build: .
+    networks:
+      - targeting-db-net
+      - service-backbone
+    depends_on:
+      targeting-postgres:
+        condition: service_healthy
+      auth-app:
+        condition: service_healthy
+    env_file:
+      - .env
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:8003/health || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  targeting_postgres_data:
