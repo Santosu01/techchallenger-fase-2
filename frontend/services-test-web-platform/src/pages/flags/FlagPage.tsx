@@ -13,6 +13,10 @@ const FlagPage: React.FC = () => {
   const { isOpen, options, confirm, handleConfirm, handleCancel } = useConfirm();
   const { status } = useSystemStatus();
 
+  const handleToggle = (name: string, currentStatus: boolean) => {
+    toggleFlag({ name, isEnabled: !currentStatus });
+  };
+
   const handleDelete = async (name: string) => {
     const isConfirmed = await confirm({
       title: 'Excluir Flag',
@@ -53,7 +57,7 @@ const FlagPage: React.FC = () => {
           flags={flags}
           isLoading={isLoading}
           error={error}
-          onToggle={toggleFlag}
+          onToggle={handleToggle}
           onDelete={handleDelete}
         />
       </div>

@@ -1,11 +1,10 @@
 import React from 'react';
 import { Gauge } from 'lucide-react';
-import { useLoadTest, type LoadTestFormData } from '../../hooks/use-load-test';
+import { useLoadTest, type ServiceId } from '../../hooks/use-load-test';
 import { useSystemStatus } from '../../hooks/use-system-status';
 import { ServiceStatusBadge } from '../../components/ServiceStatusBadge';
-import { LoadTestConfigForm } from './LoadTestConfigForm';
+import { LoadTestConfigForm, type LoadTestFormData } from './LoadTestConfigForm';
 import { LoadTestStats, LoadTestEmptyState } from './LoadTestStats';
-import type { ServiceId } from '../../hooks/use-load-test';
 
 const LoadTestPage: React.FC = () => {
   const { isRunning, results, stats, progress, runTest, reset } = useLoadTest();

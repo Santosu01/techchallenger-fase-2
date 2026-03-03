@@ -8,7 +8,7 @@ function cn(...inputs: ClassValue[]) {
 }
 
 interface Flag {
-  id: string;
+  id: string | number;
   name: string;
   description: string;
   is_enabled: boolean;
@@ -33,7 +33,7 @@ const FlagCard: React.FC<{
         <h4 className="font-bold text-white group-hover:text-purple-400 transition-colors uppercase tracking-tight text-sm">
           {flag.name}
         </h4>
-        <p className="text-[10px] text-text-secondary mt-1 max-w-[200px] line-clamp-1 italic">
+        <p className="text-[10px] text-text-secondary mt-1 max-w-50 line-clamp-1 italic">
           {flag.description || 'Sem descrição'}
         </p>
       </div>

@@ -16,7 +16,7 @@ interface TargetingRulesTableProps {
   rules: TargetingRule[];
   isLoading: boolean;
   onDelete: (flagName: string) => Promise<void>;
-  onRefresh: () => Promise<void>;
+  onRefresh: () => Promise<unknown>;
 }
 
 const parseRuleData = (rules: RuleData | string): RuleData => {
@@ -58,7 +58,7 @@ export const TargetingRulesTable: React.FC<TargetingRulesTableProps> = ({
       </div>
 
       <div className="overflow-x-auto glass rounded-3xl border border-white/5">
-        <table className="w-full text-left border-collapse min-w-[600px]">
+        <table className="w-full text-left border-collapse min-w-150">
           <thead>
             <tr className="bg-white/5">
               <th className="px-6 py-4 text-[10px] font-bold text-text-secondary uppercase tracking-widest border-b border-white/5">

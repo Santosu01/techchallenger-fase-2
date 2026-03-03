@@ -10,7 +10,8 @@
       "Bash(git -C \"d:/pos-tech/tech-challenger/fase-2\" add \"frontend/services-test-web-platform/src/context/auth-context.tsx\")",
       "Bash(npx eslint src/hooks/use-system-status.ts)",
       "Bash(git -C \"d:/pos-tech/tech-challenger/fase-2\" status --short)",
-      "Bash(wc -l components/*.tsx pages/*.tsx)"
+      "Bash(wc -l components/*.tsx pages/*.tsx)",
+      "Bash(npm run build)"
     ]
   }
 }

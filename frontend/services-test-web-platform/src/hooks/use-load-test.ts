@@ -86,6 +86,7 @@ export const useLoadTest = () => {
 
   const stats: LoadTestStats = results.reduce(
     (acc, result) => ({
+      ...acc,
       total: acc.total + 1,
       success: acc.success + (result.success ? 1 : 0),
       failed: acc.failed + (result.success ? 0 : 1),
@@ -106,7 +107,7 @@ export const useLoadTest = () => {
 
   if (stats.total > 0) {
     stats.avgDuration = stats.avgDuration / stats.total;
-    const timeSpan = (results[results.length - 1]?.timestamp ?? 0) - results[0]?.timestamp;
+    const timeSpan = (results.at(-1)?.timestamp ?? 0) - results[0]?.timestamp;
     stats.requestsPerSecond = timeSpan > 0 ? Math.round((stats.total / timeSpan) * 1000) : 0;
   }
 

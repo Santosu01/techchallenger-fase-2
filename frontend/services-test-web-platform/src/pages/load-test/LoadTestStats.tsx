@@ -1,6 +1,6 @@
 import React from 'react';
 import { Gauge, TrendingUp } from 'lucide-react';
-import type { LoadTestStats } from '../../hooks/use-load-test';
+import type { LoadTestStats as LoadTestStatsType } from '../../hooks/use-load-test';
 
 interface QuickStatCardProps {
   label: string;
@@ -96,11 +96,11 @@ const SuccessRateBar: React.FC<SuccessRateBarProps> = ({ successRate }) => {
   );
 };
 
-interface LoadTestStatsProps {
-  stats: LoadTestStats;
+interface LoadTestStatsComponentProps {
+  stats: LoadTestStatsType;
 }
 
-export const LoadTestStats: React.FC<LoadTestStatsProps> = ({ stats }) => {
+export const LoadTestStats: React.FC<LoadTestStatsComponentProps> = ({ stats }) => {
   const successRate = stats.total > 0 ? (stats.success / stats.total) * 100 : 0;
 
   return (

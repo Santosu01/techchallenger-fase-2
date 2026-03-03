@@ -14,7 +14,7 @@ const loadTestSchema = z.object({
   total: z.number().min(1).max(10000),
 });
 
-type LoadTestFormData = z.infer<typeof loadTestSchema>;
+export type LoadTestFormData = z.infer<typeof loadTestSchema>;
 
 const SERVICES = [
   { value: 'auth', label: 'Auth Service (Go)' },

@@ -26,7 +26,7 @@ interface TargetingFormProps {
   isCreating: boolean;
   isLoading: boolean;
   onCreate: (data: TargetingFormData) => Promise<void>;
-  onRefresh: () => Promise<void>;
+  onRefresh: () => Promise<unknown>;
 }
 
 export const TargetingForm: React.FC<TargetingFormProps> = ({
@@ -52,6 +52,7 @@ export const TargetingForm: React.FC<TargetingFormProps> = ({
     },
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const rolloutValue = watch('rollout_percent');
 
   React.useEffect(() => {
