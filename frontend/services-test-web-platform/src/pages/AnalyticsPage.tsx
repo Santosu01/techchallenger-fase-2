@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { BarChart3, Activity, Database, Cloud, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAnalytics } from '../hooks/useAnalytics';
-import { useSystemStatus } from '../hooks/useSystemStatus';
+import { useAnalytics } from '../hooks/use-analytics';
+import { useSystemStatus } from '../hooks/use-system-status';
 import { ServiceStatusBadge } from '../components/ServiceStatusBadge';
 
 const AnalyticsPage: React.FC = () => {
@@ -150,7 +150,7 @@ const AnalyticsPage: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-bg-primary/20 to-bg-primary/40 -z-10" />
+        <div className="absolute inset-0 bg-linear-to-b from-transparent via-bg-primary/20 to-bg-primary/40 -z-10" />
       </section>
     </div>
   );

@@ -9,7 +9,7 @@ import {
   ArrowRight,
   type LucideProps,
 } from 'lucide-react';
-import { useSystemStatus, type ServiceStatus } from '../hooks/useSystemStatus';
+import { useSystemStatus, type ServiceStatus } from '../hooks/use-system-status';
 import { ServiceStatusBadge } from '../components/ServiceStatusBadge';
 
 const ServiceCard: React.FC<{
@@ -23,9 +23,10 @@ const ServiceCard: React.FC<{
   const navigate = useNavigate();
 
   return (
-    <div
+    <button
+      type="button"
       onClick={() => navigate(path)}
-      className="glass rounded-3xl p-8 border border-glass-border hover:border-accent-primary/50 transition-all duration-500 cursor-pointer group relative overflow-hidden flex flex-col h-full"
+      className="glass rounded-3xl p-8 border border-glass-border hover:border-accent-primary/50 transition-all duration-500 cursor-pointer group relative overflow-hidden flex flex-col h-full text-left"
     >
       <div className="flex justify-between items-start mb-6">
         <div
@@ -46,7 +47,7 @@ const ServiceCard: React.FC<{
       <div
         className={`absolute -right-4 -bottom-4 w-24 h-24 ${color} opacity-5 blur-2xl group-hover:opacity-10 transition-opacity`}
       />
-    </div>
+    </button>
   );
 };
 

@@ -8,6 +8,7 @@ import logging
 import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
 from flask import Flask, jsonify
+from flask_cors import CORS
 from dotenv import load_dotenv
 
 # Configura o logging
@@ -153,6 +154,13 @@ def sqs_worker_loop():
 # --- Servidor Flask (Apenas para Health Check) ---
 
 app = Flask(__name__)
+CORS(app, resources={
+    r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Authorization", "Content-Type", "X-API-Key"]
+    }
+})
 
 @app.route('/health')
 def health():

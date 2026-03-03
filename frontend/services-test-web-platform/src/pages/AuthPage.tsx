@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Key, Copy, Check, ShieldCheck } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
-import { useSystemStatus } from '../hooks/useSystemStatus';
+import { useAuth } from '../hooks/use-auth';
+import { useSystemStatus } from '../hooks/use-system-status';
 import { ServiceStatusBadge } from '../components/ServiceStatusBadge';
 import { toast } from 'sonner';
 import Button from '../components/ui/Button';
-import { useAuthContext } from '../context/useAuthContext';
+import { useAuthContext } from '../context/use-auth-context';
 
 const AuthPage: React.FC = () => {
   const [createdKey, setCreatedKey] = useState<string | null>(null);
@@ -16,10 +16,12 @@ const AuthPage: React.FC = () => {
 
   const handleGenerate = async () => {
     try {
-      const result = await createKey(`Portal-Key-${new Date().getTime()}`);
+      const result = await createKey(`Portal-Key-${Date.now()}`);
       setCreatedKey(result.key);
-      toast.success('Chave de API gerada com sucesso!');
-    } catch (err) {
+      // Automaticamente ativar a chave gerada
+      setActiveApiKey(result.key);
+      toast.success('Chave de API gerada e ativada!');
+    } catch {
       // toast already handled in hook
     }
   };
@@ -53,7 +55,7 @@ const AuthPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mt-12">
         {/* Generate Section */}
-        <section className="glass rounded-[2rem] p-10 border border-white/5 flex flex-col items-center justify-center text-center relative overflow-hidden group">
+        <section className="glass rounded-4xl p-10 border border-white/5 flex flex-col items-center justify-center text-center relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:opacity-40 transition-opacity">
             <ShieldCheck className="w-24 h-24 text-accent-primary rotate-12" />
           </div>
@@ -88,7 +90,7 @@ const AuthPage: React.FC = () => {
         {/* Result Section */}
         <section className="flex flex-col h-full">
           {createdKey ? (
-            <div className="glass rounded-[2rem] p-10 border border-emerald-500/20 bg-emerald-500/5 relative animate-in fade-in slide-in-from-right-4 duration-500 flex-1 flex flex-col">
+            <div className="glass rounded-4xl p-10 border border-emerald-500/20 bg-emerald-500/5 relative animate-in fade-in slide-in-from-right-4 duration-500 flex-1 flex flex-col">
               <div className="mb-8 overflow-hidden">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -110,27 +112,20 @@ const AuthPage: React.FC = () => {
               </div>
 
               <div className="space-y-4 p-5 rounded-2xl bg-black/20 border border-white/5 text-sm text-text-secondary leading-relaxed">
-                <p className="flex gap-3">
+                <p className="flex gap-3 items-center">
                   <span className="text-emerald-500 font-bold">●</span>
-                  Esta chave expira em 30 dias por padrão.
+                  <span>
+                    Esta chave já está <strong className="text-emerald-400">ativa</strong> e pronta
+                    para uso.
+                  </span>
                 </p>
-                <p className="flex gap-3">
+                <p className="flex gap-3 items-center">
                   <span className="text-emerald-500 font-bold">●</span>
-                  Use-a no header <code>Authorization: Bearer [key]</code>.
+                  <span>Copie e salve em local seguro.</span>
                 </p>
               </div>
 
               <div className="flex flex-col gap-3 mt-auto pt-8">
-                <Button
-                  onClick={() => {
-                    setActiveApiKey(createdKey);
-                    toast.success('Chave ativada para toda a plataforma!');
-                  }}
-                  className="w-full bg-emerald-600 hover:bg-emerald-500 h-12 font-bold"
-                >
-                  Usar esta chave agora
-                </Button>
-
                 <button
                   onClick={() => setCreatedKey(null)}
                   className="text-[10px] font-bold text-text-secondary uppercase tracking-[0.2em] hover:text-white transition-colors mx-auto"
@@ -140,7 +135,7 @@ const AuthPage: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="glass rounded-[2rem] p-10 border border-white/5 flex-1 flex flex-col items-center justify-center text-center opacity-40 italic">
+            <div className="glass rounded-4xl p-10 border border-white/5 flex-1 flex flex-col items-center justify-center text-center opacity-40 italic">
               <Key className="w-16 h-16 mb-6 opacity-20" />
               <p className="text-text-secondary">
                 A chave gerada aparecerá aqui para você copiar e usar no sistema.

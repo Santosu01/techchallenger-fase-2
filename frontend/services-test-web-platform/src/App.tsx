@@ -3,12 +3,13 @@ import { Toaster } from 'sonner';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import AuthPage from './pages/AuthPage';
-import FlagPage from './pages/FlagPage';
-import TargetingPage from './pages/TargetingPage';
+import { FlagPage } from './pages/flags';
+import { TargetingPage } from './pages/targeting';
 import EvaluationPage from './pages/EvaluationPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import { LoadTestPage } from './pages/load-test';
 
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider } from './context/auth-context';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
             <Route path="/targeting" element={<TargetingPage />} />
             <Route path="/evaluation" element={<EvaluationPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/load-test" element={<LoadTestPage />} />
           </Routes>
         </Layout>
       </Router>
@@ -30,7 +32,6 @@ function App() {
   );
 }
 
-// Simple loader/wrapper for Home
 function HomeLoader() {
   return <Home />;
 }

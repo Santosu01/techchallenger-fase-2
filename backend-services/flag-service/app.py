@@ -5,6 +5,7 @@ import requests
 from psycopg2.extras import RealDictCursor
 from psycopg2.pool import SimpleConnectionPool
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from dotenv import load_dotenv
 from functools import wraps
 import logging
@@ -17,6 +18,13 @@ log = logging.getLogger(__name__)
 load_dotenv() 
 
 app = Flask(__name__)
+CORS(app, resources={
+    r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Authorization", "Content-Type", "X-API-Key"]
+    }
+})
 
 # --- Configuração ---
 DATABASE_URL = os.getenv("DATABASE_URL")

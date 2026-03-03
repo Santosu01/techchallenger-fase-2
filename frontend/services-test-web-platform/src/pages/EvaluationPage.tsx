@@ -3,12 +3,12 @@ import { PlayCircle, Zap, Terminal, Cpu } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useEvaluation } from '../hooks/useEvaluation';
+import { useEvaluation } from '../hooks/use-evaluation';
 import FormField from '../components/form/FormField';
 import Input from '../components/form/Input';
 import Button from '../components/ui/Button';
 
-import { useSystemStatus } from '../hooks/useSystemStatus';
+import { useSystemStatus } from '../hooks/use-system-status';
 import { ServiceStatusBadge } from '../components/ServiceStatusBadge';
 
 const evaluationSchema = z.object({
@@ -38,6 +38,63 @@ const EvaluationPage: React.FC = () => {
 
   const onSubmit = async (data: EvaluationFormData) => {
     await evaluate(data);
+  };
+
+  const renderConsoleOutput = () => {
+    if (result) {
+      return (
+        <div className="p-6 font-mono text-sm h-full flex flex-col">
+          <div className="grid grid-cols-2 gap-6 mb-8">
+            <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+              <span className="text-[10px] text-text-secondary uppercase tracking-widest font-bold">
+                Resultado Final
+              </span>
+              <div
+                className={`text-2xl font-bold mt-1 ${result.enabled ? 'text-emerald-400' : 'text-rose-400'}`}
+              >
+                {result.enabled ? 'ENABLED' : 'DISABLED'}
+              </div>
+            </div>
+            <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+              <span className="text-[10px] text-text-secondary uppercase tracking-widest font-bold">
+                Fonte
+              </span>
+              <div className="text-lg font-bold mt-1 text-white">
+                {result.reason || 'Evaluation Engine'}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-auto">
+            <span className="text-[10px] text-text-secondary uppercase tracking-widest font-bold mb-2 block">
+              Raw Response
+            </span>
+            <pre className="bg-black/30 p-4 rounded-xl text-emerald-300 text-xs overflow-x-auto border border-white/5">
+              {JSON.stringify(result, null, 2)}
+            </pre>
+          </div>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-rose-500/5">
+          <h4 className="font-bold text-rose-500 mb-2">Erro na Execução</h4>
+          <p className="text-rose-400/70 text-sm italic">
+            {error instanceof Error
+              ? error.message
+              : 'Erro na avaliação. Verifique a chave e se o serviço está rodando.'}
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-text-secondary/20 italic">
+        Aguardando parâmetros para execução...
+      </div>
+    );
   };
 
   return (
@@ -129,53 +186,8 @@ const EvaluationPage: React.FC = () => {
             )}
           </div>
 
-          <div className="flex-1 glass rounded-3xl border border-white/5 overflow-hidden flex flex-col min-h-[300px]">
-            {result ? (
-              <div className="p-6 font-mono text-sm h-full flex flex-col">
-                <div className="grid grid-cols-2 gap-6 mb-8">
-                  <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                    <span className="text-[10px] text-text-secondary uppercase tracking-widest font-bold">
-                      Resultado Final
-                    </span>
-                    <div
-                      className={`text-2xl font-bold mt-1 ${result.enabled ? 'text-emerald-400' : 'text-rose-400'}`}
-                    >
-                      {result.enabled ? 'ENABLED' : 'DISABLED'}
-                    </div>
-                  </div>
-                  <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                    <span className="text-[10px] text-text-secondary uppercase tracking-widest font-bold">
-                      Fonte
-                    </span>
-                    <div className="text-lg font-bold mt-1 text-white">
-                      {result.reason || 'Evaluation Engine'}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-auto">
-                  <span className="text-[10px] text-text-secondary uppercase tracking-widest font-bold mb-2 block">
-                    Raw Response
-                  </span>
-                  <pre className="bg-black/30 p-4 rounded-xl text-emerald-300 text-xs overflow-x-auto border border-white/5">
-                    {JSON.stringify(result, null, 2)}
-                  </pre>
-                </div>
-              </div>
-            ) : error ? (
-              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-rose-500/5">
-                <h4 className="font-bold text-rose-500 mb-2">Erro na Execução</h4>
-                <p className="text-rose-400/70 text-sm italic">
-                  {error instanceof Error
-                    ? error.message
-                    : 'Erro na avaliação. Verifique a chave e se o serviço está rodando.'}
-                </p>
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-text-secondary/20 italic">
-                Aguardando parâmetros para execução...
-              </div>
-            )}
+          <div className="flex-1 glass rounded-3xl border border-white/5 overflow-hidden flex flex-col min-h-75">
+            {renderConsoleOutput()}
           </div>
         </section>
       </div>

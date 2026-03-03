@@ -5,18 +5,15 @@ export const useAnalytics = () => {
   const healthQuery = useQuery({
     queryKey: ['analytics-health'],
     queryFn: async () => {
-      try {
-        const response = await analyticsApi.get('/health');
-        return response.data;
-      } catch {
-        return { status: 'offline' };
-      }
+      const response = await analyticsApi.get('/health');
+      return response.data;
     },
     refetchInterval: 30000,
+    retry: 1,
   });
 
   return {
-    health: healthQuery.data,
+    health: healthQuery.data ?? { status: 'offline' },
     isLoading: healthQuery.isLoading,
     refetch: healthQuery.refetch,
   };

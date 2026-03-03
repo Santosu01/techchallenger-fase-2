@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint)",
+      "Bash(npm run format)",
+      "Bash(git -C \"d:/pos-tech/tech-challenger/fase-2\" status)",
+      "Bash(git -C \"d:/pos-tech/tech-challenger/fase-2\" add -A)",
+      "Bash(npx eslint . --format=compact)",
+      "Bash(npx eslint src/context/auth-context.tsx)",
+      "Bash(git -C \"d:/pos-tech/tech-challenger/fase-2\" add \"frontend/services-test-web-platform/src/context/auth-context.tsx\")",
+      "Bash(npx eslint src/hooks/use-system-status.ts)",
+      "Bash(git -C \"d:/pos-tech/tech-challenger/fase-2\" status --short)",
+      "Bash(wc -l components/*.tsx pages/*.tsx)"
+    ]
+  }
+}

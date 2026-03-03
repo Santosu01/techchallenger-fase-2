@@ -8,18 +8,13 @@ interface EvaluationParams {
   apiKey: string;
 }
 
-import { useAuthContext } from '../context/useAuthContext';
-
 export const useEvaluation = () => {
-  const { activeApiKey } = useAuthContext();
   const evaluateMutation = useMutation({
     mutationFn: async ({ user_id, flag_name, apiKey }: EvaluationParams) => {
-      const finalApiKey = apiKey || activeApiKey || '';
+      // Se uma apiKey for fornecida, usamos ela (para testes), caso contrário o interceptor usa a do localStorage
       const response = await evaluationApi.get('/evaluate', {
         params: { user_id, flag_name },
-        headers: {
-          'X-API-Key': finalApiKey,
-        },
+        headers: apiKey ? { 'X-API-Key': apiKey } : undefined,
       });
       return response.data;
     },

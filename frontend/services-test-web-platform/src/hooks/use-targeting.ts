@@ -6,14 +6,14 @@ export interface Rule {
   id: number;
   flag_name: string;
   is_enabled: boolean;
-  rules: {
-    type: string;
-    value: string;
-    rollout_percent: number;
-  } | string;
+  rules:
+    | {
+        type: string;
+        value: string;
+        rollout_percent: number;
+      }
+    | string;
 }
-
-import { useAuthContext } from '../context/useAuthContext';
 
 interface CreateRuleParams {
   flag_name: string;
@@ -24,16 +24,11 @@ interface CreateRuleParams {
 
 export const useTargeting = () => {
   const queryClient = useQueryClient();
-  const { activeApiKey } = useAuthContext();
 
   const rulesQuery = useQuery({
     queryKey: ['rules'],
     queryFn: async () => {
-      const response = await targetingApi.get<Rule[]>('/rules', {
-        headers: {
-          Authorization: `Bearer ${activeApiKey}`,
-        },
-      });
+      const response = await targetingApi.get<Rule[]>('/rules');
       // A regra vinda do backend tem o campo 'rules' como um JSONB (objeto)
       // Precisamos garantir que o frontend entenda essa estrutura
       return response.data;
@@ -53,11 +48,7 @@ export const useTargeting = () => {
         },
       };
 
-      const response = await targetingApi.post('/rules', payload, {
-        headers: {
-          Authorization: `Bearer ${activeApiKey}`,
-        },
-      });
+      const response = await targetingApi.post('/rules', payload);
       return response.data;
     },
     onSuccess: () => {
@@ -70,17 +61,9 @@ export const useTargeting = () => {
   });
 
   const deleteRuleMutation = useMutation({
-    mutationFn: async (id: number) => {
-      // O backend usa flag_name como identificador na URL para DELETE em alguns lugares,
-      // mas no app.py a rota é /rules/<flag_name>. 
-      // Note: O id do banco não é usado na rota DELETE /rules/<string:flag_name>
-      // Precisamos saber o flag_name para deletar.
-      // Vou assumir que o 'id' passado aqui é na verdade o flag_name ou ajustar a chamada.
-      const response = await targetingApi.delete(`/rules/${id}`, {
-        headers: {
-          Authorization: `Bearer ${activeApiKey}`,
-        },
-      });
+    mutationFn: async (flagName: string) => {
+      // O backend usa flag_name como identificador na URL DELETE /rules/<string:flag_name>
+      const response = await targetingApi.delete(`/rules/${flagName}`);
       return response.data;
     },
     onSuccess: () => {

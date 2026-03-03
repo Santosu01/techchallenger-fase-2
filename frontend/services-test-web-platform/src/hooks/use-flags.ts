@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { flagApi } from '../services/api';
-import { useAuthContext } from '../context/useAuthContext';
 
 export interface FeatureFlag {
   id: number;
@@ -12,27 +11,18 @@ export interface FeatureFlag {
 
 export const useFlags = () => {
   const queryClient = useQueryClient();
-  const { activeApiKey } = useAuthContext();
 
   const flagsQuery = useQuery({
     queryKey: ['flags'],
     queryFn: async () => {
-      const response = await flagApi.get<FeatureFlag[]>('/flags', {
-        headers: {
-          Authorization: `Bearer ${activeApiKey}`,
-        },
-      });
+      const response = await flagApi.get<FeatureFlag[]>('/flags');
       return response.data;
     },
   });
 
   const createFlagMutation = useMutation({
     mutationFn: async (newFlag: Omit<FeatureFlag, 'id'>) => {
-      const response = await flagApi.post('/flags', newFlag, {
-        headers: {
-          Authorization: `Bearer ${activeApiKey}`,
-        },
-      });
+      const response = await flagApi.post('/flags', newFlag);
       return response.data;
     },
     onSuccess: () => {
@@ -46,15 +36,7 @@ export const useFlags = () => {
 
   const toggleFlagMutation = useMutation({
     mutationFn: async ({ name, isEnabled }: { name: string; isEnabled: boolean }) => {
-      const response = await flagApi.put(
-        `/flags/${name}`,
-        { is_enabled: isEnabled },
-        {
-          headers: {
-            Authorization: `Bearer ${activeApiKey}`,
-          },
-        }
-      );
+      const response = await flagApi.put(`/flags/${name}`, { is_enabled: isEnabled });
       return response.data;
     },
     onSuccess: () => {
@@ -68,11 +50,7 @@ export const useFlags = () => {
 
   const deleteFlagMutation = useMutation({
     mutationFn: async (name: string) => {
-      const response = await flagApi.delete(`/flags/${name}`, {
-        headers: {
-          Authorization: `Bearer ${activeApiKey}`,
-        },
-      });
+      const response = await flagApi.delete(`/flags/${name}`);
       return response.data;
     },
     onSuccess: () => {

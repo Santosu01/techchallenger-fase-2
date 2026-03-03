@@ -15,7 +15,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   rightIcon?: React.ReactNode;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+const ButtonComponent = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       className,
@@ -58,14 +58,17 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-        {!isLoading && leftIcon && <span className="flex-shrink-0">{leftIcon}</span>}
+        {!isLoading && leftIcon && <span className="shrink-0">{leftIcon}</span>}
         <span className={cn(isLoading && 'opacity-0')}>{children}</span>
-        {!isLoading && rightIcon && <span className="flex-shrink-0">{rightIcon}</span>}
+        {!isLoading && rightIcon && <span className="shrink-0">{rightIcon}</span>}
       </button>
     );
   }
 );
 
+ButtonComponent.displayName = 'ButtonComponent';
+
+const Button = React.memo(ButtonComponent);
 Button.displayName = 'Button';
 
 export default Button;

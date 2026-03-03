@@ -5,15 +5,7 @@ import { authApi } from '../services/api';
 export const useAuth = () => {
   const createKeyMutation = useMutation({
     mutationFn: async (name: string) => {
-      const response = await authApi.post(
-        '/admin/keys',
-        { name },
-        {
-          headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_MASTER_KEY}`,
-          },
-        }
-      );
+      const response = await authApi.post('/admin/keys', { name });
       return response.data;
     },
     onSuccess: () => {

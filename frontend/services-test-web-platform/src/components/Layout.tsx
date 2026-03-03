@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Sidebar from './Sidebar';
+import { Sidebar } from './Sidebar';
 import { Menu } from 'lucide-react';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -24,7 +24,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </header>
 
         <main className="flex-1 p-4 md:p-8 lg:ml-64 overflow-y-auto w-full transition-all duration-300">
-          <div className="max-w-6xl mx-auto">{children}</div>
+          <div className="max-w-6xl">{children}</div>
         </main>
       </div>
 
