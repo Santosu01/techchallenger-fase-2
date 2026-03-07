@@ -1,0 +1,52 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: togglemaster-ingress
+  namespace: togglemaster
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+  - http:
+      paths:
+      # Auth Service
+      - path: /auth(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: auth-service
+            port:
+              number: 8080
+      # Flag Service
+      - path: /flags(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: flag-service
+            port:
+              number: 8080
+      # Targeting Service
+      - path: /targeting(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: targeting-service
+            port:
+              number: 8080
+      # Evaluation Service
+      - path: /evaluate(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: evaluation-service
+            port:
+              number: 8080
+      # Analytics Service
+      - path: /analytics(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: analytics-service
+            port:
+              number: 8080

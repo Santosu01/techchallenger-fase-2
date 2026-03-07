@@ -1,0 +1,5 @@
+{
+    "yaml.schemas": {
+        "kubernetes://schema/v1@service": "file:///mnt/c/Users/Vinicius/techchallenger-fase-2/k8s/deployments.yaml"
+    }
+}

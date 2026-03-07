@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: togglemaster
+data:
+  # Substitua pelos endpoints reais que você anotou
+  AUTH_DB_HOST: "togglemaster-auth.cq9vxpohsy47.us-east-1.rds.amazonaws.com"
+  FLAG_DB_HOST: "togglemaster-flags.cq9vxpohsy47.us-east-1.rds.amazonaws.com"
+  TARGETING_DB_HOST: "togglemaster-targeting.cq9vxpohsy47.us-east-1.rds.amazonaws.com"
+  REDIS_HOST: "togglemaster-cache-l1p30u.serverless.use1.cache.amazonaws.com:6379"
+  SQS_URL: "https://sqs.us-east-1.amazonaws.com/716161330225/togglemaster-analytics-queue"
+  DYNAMODB_TABLE: "ToggleMasterAnalytics"
+  AWS_REGION: "us-east-1"

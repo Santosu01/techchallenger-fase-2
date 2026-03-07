@@ -62,10 +62,10 @@ Este guia detalha os passos para deploy em cloud (Kubernetes/EKS), considerando 
 ### 1.2. Autenticar no ECR
 
 ```bash
-# Substitua <SEU_ID_ECR> pelo seu ID da AWS (ex: 123456789012)
+# Substitua 716161330225 pelo seu ID da AWS (ex: 123456789012)
 aws ecr get-login-password --region us-east-1 | \
   docker login --username AWS --password-stdin \
-  <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com
+  716161330225.dkr.ecr.us-east-1.amazonaws.com
 ```
 
 ### 1.3. Build e Push de Cada Serviço
@@ -74,38 +74,78 @@ aws ecr get-login-password --region us-east-1 | \
 # ==================== AUTH SERVICE ====================
 cd auth-service
 docker build -t auth-service .
-docker tag auth-service:latest <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
-docker push <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
+docker tag auth-service:latest 716161330225.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
+docker push 716161330225.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
 cd ..
 
 # ==================== FLAG SERVICE ====================
 cd flag-service
 docker build -t flag-service .
-docker tag flag-service:latest <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/flag-service:latest
-docker push <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/flag-service:latest
+docker tag flag-service:latest 716161330225.dkr.ecr.us-east-1.amazonaws.com/flag-service:latest
+docker tag flag-service:latest 716161330225.dkr.ecr.us-east-1.amazonaws.com/flag-service:1.0
+docker push 716161330225.dkr.ecr.us-east-1.amazonaws.com/flag-service:latest
 cd ..
+
+
+cd flag-service
+REPO="716161330225.dkr.ecr.us-east-1.amazonaws.com/flag-service"
+docker build -t $REPO:latest -t $REPO:1.0 .
+docker push $REPO --all-tags
+cd ..
+
 
 # ==================== TARGETING SERVICE ====================
 cd targeting-service
 docker build -t targeting-service .
-docker tag targeting-service:latest <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/targeting-service:latest
-docker push <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/targeting-service:latest
+docker tag targeting-service:latest 716161330225.dkr.ecr.us-east-1.amazonaws.com/targeting-service:latest
+docker push 716161330225.dkr.ecr.us-east-1.amazonaws.com/targeting-service:latest
 cd ..
 
 # ==================== EVALUATION SERVICE ====================
 cd evaluation-service
 docker build -t evaluation-service .
-docker tag evaluation-service:latest <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/evaluation-service:latest
-docker push <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/evaluation-service:latest
+docker tag evaluation-service:latest 716161330225.dkr.ecr.us-east-1.amazonaws.com/evaluation-service:latest
+docker push 716161330225.dkr.ecr.us-east-1.amazonaws.com/evaluation-service:latest
 cd ..
 
 # ==================== ANALYTICS SERVICE ====================
 cd analytics-service
 docker build -t analytics-service .
-docker tag analytics-service:latest <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/analytics-service:latest
-docker push <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/analytics-service:latest
+docker tag analytics-service:latest 716161330225.dkr.ecr.us-east-1.amazonaws.com/analytics-service:latest
+docker push 716161330225.dkr.ecr.us-east-1.amazonaws.com/analytics-service:latest
 cd ..
 ```
+
+
+----------------------------------------
+
+
+REPO_BASE="716161330225.dkr.ecr.us-east-1.amazonaws.com"
+
+cd auth-service
+docker build -t $REPO_BASE/auth-service:latest -t $REPO_BASE/auth-service:1.0 .
+docker push $REPO_BASE/auth-service --all-tags
+cd ..
+
+cd flag-service
+docker build -t $REPO_BASE/flag-service:latest -t $REPO_BASE/flag-service:1.0 .
+docker push $REPO_BASE/flag-service --all-tags
+cd ..
+
+cd targeting-service
+docker build -t $REPO_BASE/targeting-service:latest -t $REPO_BASE/targeting-service:1.0 .
+docker push $REPO_BASE/targeting-service --all-tags
+cd ..
+
+cd evaluation-service
+docker build -t $REPO_BASE/evaluation-service:latest -t $REPO_BASE/evaluation-service:1.0 .
+docker push $REPO_BASE/evaluation-service --all-tags
+cd ..
+
+cd analytics-service
+docker build -t $REPO_BASE/analytics-service:latest -t $REPO_BASE/analytics-service:1.0 .
+docker push $REPO_BASE/analytics-service --all-tags
+cd ..
 
 ### 1.4. Verificar Imagens no ECR
 
@@ -274,7 +314,7 @@ Repita o processo acima com:
 
 ```bash
 # Atualizar kubeconfig
-aws eks update-kubeconfig --region us-east-1 --name togglemaster-cluster
+aws eks update-kubeconfig --region us-east-1 --name togglemaster-cluster-prod
 
 # Verificar conexão (deve mostrar os nodes)
 kubectl get nodes
@@ -303,7 +343,7 @@ kubectl get pods -n ingress-nginx
 
 Crie uma pasta `k8s/` na raiz do projeto e salve os arquivos abaixo.
 
-**⚠️ IMPORTANTE:** Substitua `<SEU_ID_ECR>` pelo seu ID da AWS em todos os manifestos.
+**⚠️ IMPORTANTE:** Substitua `716161330225` pelo seu ID da AWS em todos os manifestos.
 
 #### 1-namespace.yaml
 
@@ -342,11 +382,11 @@ metadata:
   namespace: togglemaster
 data:
   # Substitua pelos endpoints reais que você anotou
-  AUTH_DB_HOST: "togglemaster-auth.xxxx.us-east-1.rds.amazonaws.com"
-  FLAG_DB_HOST: "togglemaster-flags.xxxx.us-east-1.rds.amazonaws.com"
-  TARGETING_DB_HOST: "togglemaster-targeting.xxxx.us-east-1.rds.amazonaws.com"
-  REDIS_HOST: "togglemaster-cache.xxxx.use1.cache.amazonaws.com:6379"
-  SQS_URL: "https://sqs.us-east-1.amazonaws.com/XXXXXX/togglemaster-analytics-queue"
+  AUTH_DB_HOST: "togglemaster-auth.cq9vxpohsy47.us-east-1.rds.amazonaws.com"
+  FLAG_DB_HOST: "togglemaster-flags.cq9vxpohsy47.us-east-1.rds.amazonaws.com"
+  TARGETING_DB_HOST: "togglemaster-targeting.cq9vxpohsy47.us-east-1.rds.amazonaws.com"
+  REDIS_HOST: "togglemaster-cache-l1p30u.serverless.use1.cache.amazonaws.com:6379"
+  SQS_URL: "https://sqs.us-east-1.amazonaws.com/716161330225/togglemaster-analytics-queue"
   DYNAMODB_TABLE: "ToggleMasterAnalytics"
   AWS_REGION: "us-east-1"
 ```
@@ -374,7 +414,7 @@ spec:
     spec:
       containers:
       - name: auth-service
-        image: <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
+        image: 716161330225.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
         ports:
         - containerPort: 8080
         env:
@@ -450,7 +490,7 @@ spec:
     spec:
       containers:
       - name: flag-service
-        image: <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/flag-service:latest
+        image: 716161330225.dkr.ecr.us-east-1.amazonaws.com/flag-service:latest
         ports:
         - containerPort: 8080
         env:
@@ -472,7 +512,7 @@ spec:
               name: app-secrets
               key: POSTGRES_PASSWORD
         - name: DB_NAME
-          value: "flags_db"
+          value: "togglemaster_flags"
         resources:
           requests:
             cpu: "100m"
@@ -524,7 +564,7 @@ spec:
     spec:
       containers:
       - name: targeting-service
-        image: <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/targeting-service:latest
+        image: 716161330225.dkr.ecr.us-east-1.amazonaws.com/targeting-service:latest
         ports:
         - containerPort: 8080
         env:
@@ -598,7 +638,7 @@ spec:
     spec:
       containers:
       - name: evaluation-service
-        image: <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/evaluation-service:latest
+        image: 716161330225.dkr.ecr.us-east-1.amazonaws.com/evaluation-service:latest
         ports:
         - containerPort: 8080
         env:
@@ -658,7 +698,7 @@ spec:
     spec:
       containers:
       - name: analytics-service
-        image: <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/analytics-service:latest
+        image: 716161330225.dkr.ecr.us-east-1.amazonaws.com/analytics-service:latest
         ports:
         - containerPort: 8080
         env:
@@ -815,22 +855,22 @@ spec:
 
 ```bash
 # 1. Criar namespace
-kubectl apply -f k8s/1-namespace.yaml
+kubectl apply -f k8s/namespace.yaml
 
 # 2. Criar secrets
-kubectl apply -f k8s/2-secrets.yaml
+kubectl apply -f k8s/secrets.yaml
 
 # 3. Criar configmap
-kubectl apply -f k8s/3-configmap.yaml
+kubectl apply -f k8s/configmap.yaml
 
 # 4. Criar deployments e services
-kubectl apply -f k8s/4-deployments.yaml
+kubectl apply -f k8s/deployments.yaml
 
 # 5. Criar ingress
-kubectl apply -f k8s/5-ingress.yaml
+kubectl apply -f k8s/ingress.yaml
 
 # 6. Criar HPA
-kubectl apply -f k8s/6-hpa.yaml
+kubectl apply -f k8s/hpa.yaml
 ```
 
 ### 3.8. Verificar Status
