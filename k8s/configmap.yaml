@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: togglemaster
+data:
+  # Database hosts (RDS)
+  AUTH_DB_HOST: "togglemaster-auth.c6h7fxfgdm94.us-east-1.rds.amazonaws.com"
+  FLAG_DB_HOST: "togglemaster-flags.c6h7fxfgdm94.us-east-1.rds.amazonaws.com"
+  TARGETING_DB_HOST: "togglemaster-targeting.c6h7fxfgdm94.us-east-1.rds.amazonaws.com"
+  REDIS_HOST: "togglemaster-cache-nlxlok.serverless.use1.cache.amazonaws.com:6379"
+  REDIS_TLS: "true"
+  # URLs de servicos internos (comunicacao entre microservicos)
+  AUTH_SERVICE_URL: "http://auth-service:8001"
+  FLAG_SERVICE_URL: "http://flag-service:8002"
+  TARGETING_SERVICE_URL: "http://targeting-service:8003"
+  EVALUATION_SERVICE_URL: "http://evaluation-service:8004"
+  ANALYTICS_SERVICE_URL: "http://analytics-service:8006"
+  # Configuracoes AWS
+  AWS_REGION: "us-east-1"
+  AWS_SQS_URL: "https://sqs.us-east-1.amazonaws.com/886833754732/togglemaster-analytics-queue"
+  AWS_DYNAMODB_TABLE: "ToggleMasterAnalytics"

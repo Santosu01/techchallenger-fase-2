@@ -5,14 +5,14 @@ REM ==========================================
 REM EDITE AS VARIAVEIS ABAIXO:
 
 REM AWS Access Key ID
-set "AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_ID_AQUI"
+set "AWS_ACCESS_KEY_ID=SUA_CHAVE_AQUI"
 
 REM AWS Secret Access Key
-set "AWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY_AQUI"
+set "AWS_SECRET_ACCESS_KEY=SUA_CHAVE_AQUI"
 
 REM AWS Session Token (OBRIGATORIO para credenciais temporarias/federation/SSO)
 REM Deixe em branco se usa access key permanente
-set "AWS_SESSION_TOKEN=AWS_SESSION_TOKEN_AQUI"
+set "AWS_SESSION_TOKEN=SUA_CHAVE_AQUI"
 
 REM Regiao padrao
 set "AWS_DEFAULT_REGION=us-east-1"

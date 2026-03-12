@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -42,11 +43,6 @@ func main() {
 	// Tenta obter a chave automaticamente se não estiver definida
 	ensureServiceKey()
 
-	redisURL := os.Getenv("REDIS_URL")
-	if redisURL == "" {
-		log.Fatal("REDIS_URL deve ser definida (ex: redis://localhost:6379)")
-	}
-
 	flagSvcURL := os.Getenv("FLAG_SERVICE_URL")
 	if flagSvcURL == "" {
 		log.Fatal("FLAG_SERVICE_URL deve ser definida")
@@ -68,14 +64,40 @@ func main() {
 	}
 
 	// --- Inicializa Clientes ---
-	
+
 	// Cliente Redis
-	opt, err := redis.ParseURL(redisURL)
-	if err != nil {
-		log.Fatalf("Não foi possível parsear a URL do Redis: %v", err)
+	redisHost := os.Getenv("REDIS_HOST")
+	if redisHost == "" {
+		log.Fatal("REDIS_HOST deve ser definida")
 	}
-	rdb := redis.NewClient(opt)
-	if _, err := rdb.Ping(ctx).Result(); err != nil {
+
+	log.Printf("Conectando ao Redis em: %s", redisHost)
+
+	// Configura TLS (necessário para ElastiCache Serverless)
+	redisTLS := os.Getenv("REDIS_TLS") == "true"
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr:         redisHost,
+		DialTimeout:  5 * time.Second,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Second,
+		PoolTimeout:  10 * time.Second,
+		PoolSize:     10,
+	})
+
+	// Habilita TLS se configurado
+	if redisTLS {
+		rdb.Options().TLSConfig = &tls.Config{
+			InsecureSkipVerify: true, // Necessário para ElastiCache Serverless
+		}
+		log.Println("TLS habilitado para conexão Redis")
+	}
+
+	// Verifica conexão com Redis
+	pingCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	_, err := rdb.Ping(pingCtx).Result()
+	cancel()
+	if err != nil {
 		log.Fatalf("Não foi possível conectar ao Redis: %v", err)
 	}
 	log.Println("Conectado ao Redis com sucesso!")

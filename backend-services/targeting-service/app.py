@@ -43,6 +43,62 @@ except psycopg2.OperationalError as e:
     log.critical(f"Erro fatal ao conectar ao PostgreSQL: {e}")
     sys.exit(1)
 
+# --- Função para criar tabelas automaticamente ---
+def init_db():
+    """Cria as tabelas necessárias se não existirem"""
+    conn = None
+    cur = None
+    try:
+        conn = pool.getconn()
+        cur = conn.cursor()
+
+        # Cria a tabela targeting_rules
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS targeting_rules (
+                id SERIAL PRIMARY KEY,
+                flag_name VARCHAR(100) UNIQUE NOT NULL,
+                is_enabled BOOLEAN NOT NULL DEFAULT true,
+                rules JSONB NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
+        # Cria a função de trigger para atualizar updated_at
+        cur.execute("""
+            CREATE OR REPLACE FUNCTION trigger_set_timestamp()
+            RETURNS TRIGGER AS $$
+            BEGIN
+              NEW.updated_at = NOW();
+              RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+        """)
+
+        # Cria o trigger (DROP IF EXISTS primeiro)
+        cur.execute("""
+            DROP TRIGGER IF EXISTS set_timestamp ON targeting_rules;
+            CREATE TRIGGER set_timestamp
+            BEFORE UPDATE ON targeting_rules
+            FOR EACH ROW
+            EXECUTE PROCEDURE trigger_set_timestamp();
+        """)
+
+        conn.commit()
+        log.info("Tabela 'targeting_rules' verificada/criada com sucesso.")
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        log.warning(f"Aviso ao criar tabela (pode já existir): {e}")
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            pool.putconn(conn)
+
+# Inicializa o banco de dados
+init_db()
+
 # --- Middleware de Autenticação (Idêntico ao flag-service) ---
 def require_auth(f):
     """ Middleware para validar a chave de API contra o auth-service """
