@@ -7,7 +7,7 @@ import time
 import logging
 import boto3
 from botocore.exceptions import NoCredentialsError, ClientError, BotoCoreError
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 
@@ -141,8 +141,27 @@ def process_message(message):
         )
         return True
 
-    except json.JSONDecodeError:
-        log.error(f"Erro ao decodificar JSON da mensagem ID: {message['MessageId']}")
+    except json.JSONDecodeError as e:
+        log.error(f"JSON inválido na mensagem {message['MessageId']}: {e}. Deletando mensagem inválida.")
+        # Deleta mensagem inválida para não travar a fila
+        try:
+            sqs.delete_message(
+                QueueUrl=SQS_QUEUE_URL,
+                ReceiptHandle=message['ReceiptHandle']
+            )
+        except Exception:
+            pass
+        return False
+    except (KeyError, TypeError) as e:
+        log.error(f"Estrutura inválida na mensagem {message['MessageId']}: {e}. Deletando mensagem inválida.")
+        # Deleta mensagem com estrutura inválida
+        try:
+            sqs.delete_message(
+                QueueUrl=SQS_QUEUE_URL,
+                ReceiptHandle=message['ReceiptHandle']
+            )
+        except Exception:
+            pass
         return False
     except ClientError as e:
         log.error(f"Erro do Boto3 ao processar {message['MessageId']}: {e}")
@@ -213,6 +232,90 @@ def health():
         "status": "ok",
         "aws": aws_status
     })
+
+@app.route('/events')
+def get_events():
+    """Lista todos os eventos de avaliação do DynamoDB"""
+    _, db = get_boto3_clients()
+    if not db:
+        return jsonify({"error": "DynamoDB não disponível"}), 503
+
+    try:
+        # Parâmetros de paginação
+        limit = int(request.args.get('limit', 100))
+        flag_name = request.args.get('flag_name')
+
+        response = db.scan(TableName=DYNAMODB_TABLE_NAME, Limit=limit)
+        items = response.get('Items', [])
+
+        # Converte do formato DynamoDB para JSON normal
+        events = []
+        for item in items:
+            event = {
+                'event_id': item['event_id']['S'],
+                'user_id': item['user_id']['S'],
+                'flag_name': item['flag_name']['S'],
+                'result': item['result']['BOOL'],
+                'timestamp': item['timestamp']['S']
+            }
+            # Filtra por flag_name se especificado
+            if flag_name and event['flag_name'] != flag_name:
+                continue
+            events.append(event)
+
+        # Ordena por timestamp (mais recentes primeiro)
+        events.sort(key=lambda x: x['timestamp'], reverse=True)
+
+        return jsonify({
+            "events": events,
+            "count": len(events)
+        })
+    except Exception as e:
+        log.error(f"Erro ao buscar eventos: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/events/stats')
+def get_stats():
+    """Retorna estatísticas agregadas dos eventos"""
+    _, db = get_boto3_clients()
+    if not db:
+        return jsonify({"error": "DynamoDB não disponível"}), 503
+
+    try:
+        # Escaneia todos os itens
+        response = db.scan(TableName=DYNAMODB_TABLE_NAME)
+        items = response.get('Items', [])
+
+        # Calcula estatísticas
+        total_events = len(items)
+        flag_stats = {}
+        true_count = 0
+        false_count = 0
+
+        for item in items:
+            flag_name = item['flag_name']['S']
+            result = item['result']['BOOL']
+
+            # Contagem por flag
+            if flag_name not in flag_stats:
+                flag_stats[flag_name] = {'total': 0, 'true': 0, 'false': 0}
+            flag_stats[flag_name]['total'] += 1
+            if result:
+                flag_stats[flag_name]['true'] += 1
+                true_count += 1
+            else:
+                flag_stats[flag_name]['false'] += 1
+                false_count += 1
+
+        return jsonify({
+            "total_events": total_events,
+            "true_results": true_count,
+            "false_results": false_count,
+            "flags": flag_stats
+        })
+    except Exception as e:
+        log.error(f"Erro ao calcular estatísticas: {e}")
+        return jsonify({"error": str(e)}), 500
 
 # --- Inicialização ---
 
