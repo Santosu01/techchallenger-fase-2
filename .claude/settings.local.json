@@ -54,7 +54,8 @@
       "Bash(curl -s --connect-timeout 15 \"http://k8s-ingressn-ingressn-14dd97d4f1-5e4bda313b0f63eb.elb.us-east-1.amazonaws.com/targeting/health\")",
       "Bash(kubectl auth:*)",
       "Bash(aws configure:*)",
-      "Bash(curl -s http://k8s-ingressn-ingressn-3cc6c8d93d-6916488b79a0c346.elb.us-east-1.amazonaws.com/analytics/health)"
+      "Bash(curl -s http://k8s-ingressn-ingressn-3cc6c8d93d-6916488b79a0c346.elb.us-east-1.amazonaws.com/analytics/health)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

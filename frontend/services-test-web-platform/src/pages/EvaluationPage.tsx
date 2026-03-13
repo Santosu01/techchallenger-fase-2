@@ -1,5 +1,5 @@
 import React from 'react';
-import { PlayCircle, Zap, Terminal, Cpu } from 'lucide-react';
+import { PlayCircle, Zap, Terminal, Cpu, Key, RefreshCw } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -10,11 +10,11 @@ import Button from '../components/ui/Button';
 
 import { useSystemStatus } from '../hooks/use-system-status';
 import { ServiceStatusBadge } from '../components/ServiceStatusBadge';
+import { useAuthContext } from '../context/use-auth-context';
 
 const evaluationSchema = z.object({
   user_id: z.string().min(1, 'Identify the user'),
   flag_name: z.string().min(1, 'Target flag name is required'),
-  apiKey: z.string().min(10, 'A valid API Key is required (min 10 chars)'),
 });
 
 type EvaluationFormData = z.infer<typeof evaluationSchema>;
@@ -22,6 +22,7 @@ type EvaluationFormData = z.infer<typeof evaluationSchema>;
 const EvaluationPage: React.FC = () => {
   const { evaluate, isEvaluating, error, result } = useEvaluation();
   const { status } = useSystemStatus();
+  const { activeApiKey, setActiveApiKey } = useAuthContext();
 
   const {
     register,
@@ -32,12 +33,24 @@ const EvaluationPage: React.FC = () => {
     defaultValues: {
       user_id: 'user-123',
       flag_name: '',
-      apiKey: '',
     },
   });
 
   const onSubmit = async (data: EvaluationFormData) => {
-    await evaluate(data);
+    if (!activeApiKey) {
+      return;
+    }
+    await evaluate({
+      user_id: data.user_id,
+      flag_name: data.flag_name,
+      apiKey: activeApiKey,
+    });
+  };
+
+  const handleRefreshKey = () => {
+    setActiveApiKey(null);
+    // O AuthContext vai gerar uma nova chave automaticamente
+    window.location.reload();
   };
 
   const renderConsoleOutput = () => {
@@ -114,7 +127,7 @@ const EvaluationPage: React.FC = () => {
         </div>
         <p className="text-text-secondary max-w-3xl leading-relaxed">
           Este é o motor do ToggleMaster. Desenvolvido em Go para máxima performance, este endpoint
-          consulta o Redis para cache de regras e flags, garantindo latências inferiores a 10ms.
+          consulta Redis para cache de regras e flags, garantindo latências inferiores a 10ms.
         </p>
       </header>
 
@@ -145,25 +158,38 @@ const EvaluationPage: React.FC = () => {
               </FormField>
             </div>
 
-            <FormField
-              label="SERVICE API KEY"
-              error={errors.apiKey?.message}
-              description="Header: X-API-Key"
-              required
-            >
-              <Input
-                type="password"
-                {...register('apiKey')}
-                placeholder="Cole sua chave gerada no Auth Service"
-                className="font-mono"
-                error={!!errors.apiKey}
-              />
-            </FormField>
+            {/* API Key Status - Auto-gerada */}
+            <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                    <Key className="w-4 h-4 text-emerald-500" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-text-secondary uppercase tracking-widest font-bold block">
+                      API Key (Auto-gerada)
+                    </span>
+                    <span className="text-xs font-mono text-white/60">
+                      {activeApiKey ? `${activeApiKey.substring(0, 20)}...` : 'Gerando...'}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRefreshKey}
+                  className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                  title="Gerar nova chave"
+                >
+                  <RefreshCw className="w-4 h-4 text-text-secondary" />
+                </button>
+              </div>
+            </div>
 
             <Button
               type="submit"
               variant="primary"
               isLoading={isEvaluating}
+              disabled={!activeApiKey}
               className="w-full bg-emerald-600 hover:bg-emerald-500 shadow-emerald-900/40"
               leftIcon={!isEvaluating && <Zap className="w-5 h-5" />}
             >

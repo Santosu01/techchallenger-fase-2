@@ -8,6 +8,7 @@ networks:
 services:
   analytics-app:
     build: .
+    container_name: analytics-app
     networks:
       - infra-net
       - service-backbone
