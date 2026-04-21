@@ -1,0 +1,3512 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<title>ToggleMaster - Guia de Deploy Cloud</title>
+		<style>
+			/* From extension vscode.github */
+			/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+			.vscode-dark img[src$="\#gh-light-mode-only"],
+			.vscode-light img[src$="\#gh-dark-mode-only"],
+			.vscode-high-contrast:not(.vscode-high-contrast-light)
+				img[src$="\#gh-light-mode-only"],
+			.vscode-high-contrast-light img[src$="\#gh-dark-mode-only"] {
+				display: none;
+			}
+		</style>
+		<link
+			rel="stylesheet"
+			href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css" />
+		<link
+			href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css"
+			rel="stylesheet"
+			type="text/css" />
+		<link
+			rel="stylesheet"
+			href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css" />
+		<link
+			rel="stylesheet"
+			href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css" />
+		<style>
+			body {
+				font-family:
+					-apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui,
+					"Ubuntu", "Droid Sans", sans-serif;
+				font-size: 14px;
+				line-height: 1.6;
+			}
+		</style>
+		<style>
+			.task-list-item {
+				list-style-type: none;
+			}
+
+			.task-list-item-checkbox {
+				margin-left: -20px;
+				vertical-align: middle;
+				pointer-events: none;
+			}
+		</style>
+		<style>
+			:root {
+				--color-note: #0969da;
+				--color-tip: #1a7f37;
+				--color-warning: #9a6700;
+				--color-severe: #bc4c00;
+				--color-caution: #d1242f;
+				--color-important: #8250df;
+			}
+		</style>
+		<style>
+			@media (prefers-color-scheme: dark) {
+				:root {
+					--color-note: #2f81f7;
+					--color-tip: #3fb950;
+					--color-warning: #d29922;
+					--color-severe: #db6d28;
+					--color-caution: #f85149;
+					--color-important: #a371f7;
+				}
+			}
+		</style>
+		<style>
+			.markdown-alert {
+				padding: 0.5rem 1rem;
+				margin-bottom: 16px;
+				color: inherit;
+				border-left: 0.25em solid #888;
+			}
+
+			.markdown-alert > :first-child {
+				margin-top: 0;
+			}
+
+			.markdown-alert > :last-child {
+				margin-bottom: 0;
+			}
+
+			.markdown-alert .markdown-alert-title {
+				display: flex;
+				font-weight: 500;
+				align-items: center;
+				line-height: 1;
+			}
+
+			.markdown-alert .markdown-alert-title .octicon {
+				margin-right: 0.5rem;
+				display: inline-block;
+				overflow: visible !important;
+				vertical-align: text-bottom;
+				fill: currentColor;
+			}
+
+			.markdown-alert.markdown-alert-note {
+				border-left-color: var(--color-note);
+			}
+
+			.markdown-alert.markdown-alert-note .markdown-alert-title {
+				color: var(--color-note);
+			}
+
+			.markdown-alert.markdown-alert-important {
+				border-left-color: var(--color-important);
+			}
+
+			.markdown-alert.markdown-alert-important .markdown-alert-title {
+				color: var(--color-important);
+			}
+
+			.markdown-alert.markdown-alert-warning {
+				border-left-color: var(--color-warning);
+			}
+
+			.markdown-alert.markdown-alert-warning .markdown-alert-title {
+				color: var(--color-warning);
+			}
+
+			.markdown-alert.markdown-alert-tip {
+				border-left-color: var(--color-tip);
+			}
+
+			.markdown-alert.markdown-alert-tip .markdown-alert-title {
+				color: var(--color-tip);
+			}
+
+			.markdown-alert.markdown-alert-caution {
+				border-left-color: var(--color-caution);
+			}
+
+			.markdown-alert.markdown-alert-caution .markdown-alert-title {
+				color: var(--color-caution);
+			}
+		</style>
+	</head>
+	<body class="vscode-body vscode-light">
+		<h1 id="togglemaster---guia-de-deploy-cloud"
+			>ToggleMaster - Guia de Deploy Cloud</h1
+		>
+		<h2 id="postech---tech-challenge---fase-3"
+			>POSTECH - Tech Challenge - Fase 3</h2
+		>
+		<p
+			>Este guia detalha os passos para implementar infraestrutura imutável,
+			DevSecOps e GitOps para o ToggleMaster usando IaC, CI/CD e ArgoCD.</p
+		>
+		<p
+			><strong>Nota:</strong> Todos os blocos de código marcados com ```bash
+			devem ser executados no terminal. Eles estão destacados com &quot;<strong
+				>Cole no terminal:</strong
+			>&quot; para facilitar a identificação.</p
+		>
+		<hr />
+		<h2 id="desafio">Desafio</h2>
+		<p
+			>A DevOps Solutions Inc. aprovou a arquitetura, mas a operação é
+			insustentável. Precisamos de &quot;Se não está no código, não
+			existe&quot;: IaC, pipelines de segurança e GitOps.</p
+		>
+		<h2 id="nota-importante-ambiente-aws-academy"
+			>Nota Importante: Ambiente AWS Academy</h2
+		>
+		<ul>
+			<li
+				><strong>Não pode criar Roles ou Policies IAM via Terraform</strong></li
+			>
+			<li>Use a LabRole existente para EKS e Node Groups</li>
+			<li>Importe a LabRole via data source ou variável</li>
+		</ul>
+		<h2 id="arquitetura-final">Arquitetura Final</h2>
+		<pre><code>Infraestrutura Imutável (Terraform)
+├── VPC + Subnets + IGW
+├── EKS Cluster (LabRole)
+├── RDS PostgreSQL x3
+├── ElastiCache Redis
+├── DynamoDB Table
+└── SQS Queue
+
+CI/CD Pipeline (GitHub Actions)
+├── Build &amp; Unit Tests
+├── Linting
+├── Security Scans (SAST/SCA)
+└── Docker Build &amp; Push ECR
+
+GitOps (ArgoCD)
+├── Repo separado para manifests
+├── Sync automático
+└── Deploy imutável
+</code></pre>
+		<hr />
+		<h2 id="sumário">Sumário</h2>
+		<table>
+			<thead>
+				<tr>
+					<th>Etapa</th>
+					<th>Descrição</th>
+					<th>Ferramentas</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>0</td>
+					<td>Pré-requisitos</td>
+					<td>Terraform, AWS CLI, kubectl, Helm</td>
+				</tr>
+				<tr>
+					<td>1</td>
+					<td>IaC com Terraform</td>
+					<td>VPC, EKS, Bancos, SQS</td>
+				</tr>
+				<tr>
+					<td>2</td>
+					<td>CI/CD DevSecOps</td>
+					<td>GitHub Actions, Security Scans</td>
+				</tr>
+				<tr>
+					<td>3</td>
+					<td>GitOps com ArgoCD</td>
+					<td>Manifests repo, Auto-sync</td>
+				</tr>
+				<tr>
+					<td>4</td>
+					<td>Testes e Validação</td>
+					<td>Pipeline + ArgoCD</td>
+				</tr>
+				<tr>
+					<td>5</td>
+					<td>Entregáveis</td>
+					<td>Vídeo, Código, Relatório</td>
+				</tr>
+			</tbody>
+		</table>
+		<hr />
+		<h2 id="etapa-0-pré-requisitos-e-configuração-inicial"
+			>ETAPA 0: Pré-requisitos e Configuração Inicial</h2
+		>
+		<h3 id="01-verificar-instalações">0.1. Verificar Instalações</h3>
+		<p
+			>Após instalar Terraform, AWS CLI, kubectl e Helm, verifique se todas as
+			ferramentas estão funcionando:</p
+		>
+		<h4 id="terraform">Terraform</h4>
+		<p><strong>Cole no terminal:</strong></p>
+		<pre><code class="language-bash">terraform version
+</code></pre>
+		<p><strong>Saída esperada:</strong></p>
+		<pre><code>Terraform v1.6.0 (ou superior)
+on windows_amd64
+</code></pre>
+		<h4 id="aws-cli">AWS CLI</h4>
+		<p><strong>Cole no terminal:</strong></p>
+		<pre><code class="language-bash">aws --version
+</code></pre>
+		<p><strong>Saída esperada:</strong></p>
+		<pre><code>aws-cli/2.34.9 Python/3.13.11 Windows/11 exe/AMD64
+</code></pre>
+		<h4 id="kubectl">kubectl</h4>
+		<p><strong>Cole no terminal:</strong></p>
+		<pre><code class="language-bash">kubectl version --client
+</code></pre>
+		<p><strong>Saída esperada:</strong></p>
+		<pre><code>Client Version: v1.34.1
+Kustomize Version: v5.7.1
+</code></pre>
+		<h4 id="helm">Helm</h4>
+		<p><strong>Cole no terminal:</strong></p>
+		<pre><code class="language-bash">helm version
+</code></pre>
+		<p><strong>Saída esperada:</strong></p>
+		<pre><code>version.BuildInfo{Version:"v3.13.0", GitCommit:"...", GitTreeState:"clean", GoVersion:"..."}
+</code></pre>
+		<p
+			><strong
+				>Se alguma ferramenta não for encontrada, execute o script de
+				instalação:</strong
+			></p
+		>
+		<pre><code class="language-powershell">./scripts/install-tools.ps1
+</code></pre>
+		<h3 id="02-configurar-aws-cli">0.2. Configurar AWS CLI</h3>
+		<p><strong>Cole no terminal:</strong></p>
+		<pre><code class="language-bash">aws configure
+</code></pre>
+		<p>Será solicitado:</p>
+		<ul>
+			<li>AWS Access Key ID: Cole sua chave</li>
+			<li>AWS Secret Access Key: Cole sua chave secreta</li>
+			<li>Default region: us-east-1</li>
+			<li>Default output format: json</li>
+		</ul>
+		<h3 id="03-criar-bucket-s3-para-backend-terraform"
+			>0.3. Criar Bucket S3 para Backend Terraform</h3
+		>
+		<p><strong>Cole no terminal:</strong></p>
+		<pre><code class="language-bash"># Criar bucket S3
+aws s3 mb s3://seu-bucket-terraform-state --region us-east-1
+
+# Criar tabela DynamoDB para lock
+aws dynamodb create-table \
+  --table-name togglemaster-tfstate-lock \
+  --attribute-definitions AttributeName=LockID,AttributeType=S \
+  --key-schema AttributeName=LockID,KeyType=HASH \
+  --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+  --region us-east-1
+</code></pre>
+		<p
+			><strong>⚠️ IMPORTANTE:</strong> Altere
+			<code>seu-bucket-terraform-state</code> para um nome único (ex:
+			<code>togglemaster-tfstate-seu-email</code>)</p
+		>
+		<h3 id="04-atualizar-backend-terraform"
+			>0.4. Atualizar Backend Terraform</h3
+		>
+		<p
+			>Edite o arquivo <code>terraform/backend.tf</code> e atualize o nome do
+			bucket:</p
+		>
+		<pre><code class="language-hcl">terraform {
+  backend &quot;s3&quot; {
+    bucket         = &quot;seu-bucket-terraform-state&quot;  # Mude isso
+    key            = &quot;togglemaster/terraform.tfstate&quot;
+    region         = &quot;us-east-1&quot;
+    dynamodb_table = &quot;togglemaster-tfstate-lock&quot;
+  }
+}
+</code></pre>
+		<hr />
+		<h2 id="etapa-1-infraestrutura-como-código-terraform"
+			>ETAPA 1: Infraestrutura como Código (Terraform)</h2
+		>
+		<h3 id="11-estrutura-do-projeto">1.1. Estrutura do Projeto</h3>
+		<p>Crie uma estrutura organizada:</p>
+		<pre><code>terraform/
+├── main.tf
+├── variables.tf
+├── outputs.tf
+├── backend.tf (S3 remote state)
+├── modules/
+│   ├── vpc/
+│   ├── eks/
+│   ├── rds/
+│   ├── redis/
+│   ├── dynamodb/
+│   └── sqs/
+└── terraform.tfvars
+</code></pre>
+		<h3 id="12-backend-remoto-s3">1.2. Backend Remoto (S3)</h3>
+		<pre><code class="language-hcl">terraform {
+  backend &quot;s3&quot; {
+    bucket = &quot;seu-bucket-terraform-state&quot;
+    key    = &quot;togglemaster/terraform.tfstate&quot;
+    region = &quot;us-east-1&quot;
+    use_lockfile = true
+  }
+}
+</code></pre>
+		<h3 id="13-vpc-e-networking">1.3. VPC e Networking</h3>
+		<pre><code class="language-hcl">module &quot;vpc&quot; {
+  source = &quot;./modules/vpc&quot;
+  
+  vpc_cidr = &quot;10.0.0.0/16&quot;
+  public_subnets = [&quot;10.0.1.0/24&quot;, &quot;10.0.2.0/24&quot;]
+  private_subnets = [&quot;10.0.10.0/24&quot;, &quot;10.0.11.0/24&quot;]
+}
+</code></pre>
+		<h3 id="14-eks-cluster-aws-academy">1.4. EKS Cluster (AWS Academy)</h3>
+		<pre><code class="language-hcl">data &quot;aws_iam_role&quot; &quot;lab_role&quot; {
+  name = &quot;LabRole&quot;  # Importar LabRole existente
+}
+
+module &quot;eks&quot; {
+  source = &quot;./modules/eks&quot;
+  
+  cluster_name = &quot;togglemaster-cluster&quot;
+  vpc_id = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
+  
+  # Usar LabRole
+  cluster_role_arn = data.aws_iam_role.lab_role.arn
+  node_role_arn = data.aws_iam_role.lab_role.arn
+}
+</code></pre>
+		<h3 id="15-bancos-de-dados">1.5. Bancos de Dados</h3>
+		<h4 id="rds-postgresql-x3">RDS PostgreSQL x3</h4>
+		<pre><code class="language-hcl">module &quot;rds_auth&quot; {
+  source = &quot;./modules/rds&quot;
+  
+  identifier = &quot;togglemaster-auth&quot;
+  db_name = &quot;auth_db&quot;
+  username = &quot;admin&quot;
+  # Senha via variable ou secret
+}
+
+# Repetir para flag-db e targeting-db
+</code></pre>
+		<h4 id="elasticache-redis">ElastiCache Redis</h4>
+		<pre><code class="language-hcl">module &quot;redis&quot; {
+  source = &quot;./modules/redis&quot;
+  
+  cluster_id = &quot;togglemaster-cache&quot;
+  node_type = &quot;cache.t3.micro&quot;
+}
+</code></pre>
+		<h4 id="dynamodb">DynamoDB</h4>
+		<pre><code class="language-hcl">module &quot;dynamodb&quot; {
+  source = &quot;./modules/dynamodb&quot;
+  
+  table_name = &quot;ToggleMasterAnalytics&quot;
+  hash_key = &quot;requestId&quot;
+}
+</code></pre>
+		<h3 id="16-sqs">1.6. SQS</h3>
+		<pre><code class="language-hcl">module &quot;sqs&quot; {
+  source = &quot;./modules/sqs&quot;
+  
+  queue_name = &quot;togglemaster-analytics-queue&quot;
+}
+</code></pre>
+		<h3 id="17-ecr-repositories-opcional">1.7. ECR Repositories (Opcional)</h3>
+		<pre><code class="language-hcl">module &quot;ecr&quot; {
+  source = &quot;./modules/ecr&quot;
+  
+  repositories = [
+    &quot;auth-service&quot;,
+    &quot;flag-service&quot;, 
+    &quot;targeting-service&quot;,
+    &quot;evaluation-service&quot;,
+    &quot;analytics-service&quot;
+  ]
+}
+</code></pre>
+		<h3 id="18-deploy-da-infraestrutura">1.8. Deploy da Infraestrutura</h3>
+		<p><strong>Cole no terminal:</strong></p>
+		<pre><code class="language-bash">terraform init
+terraform plan
+terraform apply
+</code></pre>
+		<hr />
+		<h2 id="etapa-2-pipeline-cicd-devsecops"
+			>ETAPA 2: Pipeline CI/CD DevSecOps</h2
+		>
+		<h3 id="21-github-actions-workflow">2.1. GitHub Actions Workflow</h3>
+		<p>Crie <code>.github/workflows/ci.yml</code> para cada microsserviço:</p>
+		<pre><code class="language-yaml"><span class="hljs-attr">name:</span> <span class="hljs-string">CI</span> <span class="hljs-string">Pipeline</span>
+
+<span class="hljs-attr">on:</span>
+  <span class="hljs-attr">push:</span>
+    <span class="hljs-attr">branches:</span> [ <span class="hljs-string">main</span> ]
+  <span class="hljs-attr">pull_request:</span>
+    <span class="hljs-attr">branches:</span> [ <span class="hljs-string">main</span> ]
+
+<span class="hljs-attr">jobs:</span>
+  <span class="hljs-attr">build-and-test:</span>
+    <span class="hljs-attr">runs-on:</span> <span class="hljs-string">ubuntu-latest</span>
+    
+    <span class="hljs-attr">steps:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/checkout@v3</span>
+    
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Set</span> <span class="hljs-string">up</span> <span class="hljs-string">Go/Python</span>
+      <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/setup-go@v3</span>
+      <span class="hljs-attr">with:</span>
+        <span class="hljs-attr">go-version:</span> <span class="hljs-string">&#x27;1.21&#x27;</span>
+    
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Cache</span> <span class="hljs-string">dependencies</span>
+      <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/cache@v3</span>
+      <span class="hljs-attr">with:</span>
+        <span class="hljs-attr">path:</span> <span class="hljs-string">|
+          ~/.cache/go-build
+          ~/go/pkg/mod
+</span>        <span class="hljs-attr">key:</span> <span class="hljs-string">${{</span> <span class="hljs-string">runner.os</span> <span class="hljs-string">}}-go-${{</span> <span class="hljs-string">hashFiles(&#x27;**/go.sum&#x27;)</span> <span class="hljs-string">}}</span>
+    
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Build</span>
+      <span class="hljs-attr">run:</span> <span class="hljs-string">go</span> <span class="hljs-string">build</span> <span class="hljs-string">-v</span> <span class="hljs-string">./...</span>
+    
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Unit</span> <span class="hljs-string">Tests</span>
+      <span class="hljs-attr">run:</span> <span class="hljs-string">go</span> <span class="hljs-string">test</span> <span class="hljs-string">-v</span> <span class="hljs-string">./...</span>
+  
+  <span class="hljs-attr">lint:</span>
+    <span class="hljs-attr">runs-on:</span> <span class="hljs-string">ubuntu-latest</span>
+    
+    <span class="hljs-attr">steps:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/checkout@v3</span>
+    
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Run</span> <span class="hljs-string">golangci-lint</span>
+      <span class="hljs-attr">uses:</span> <span class="hljs-string">golangci/golangci-lint-action@v3</span>
+      <span class="hljs-attr">with:</span>
+        <span class="hljs-attr">version:</span> <span class="hljs-string">latest</span>
+  
+  <span class="hljs-attr">security:</span>
+    <span class="hljs-attr">runs-on:</span> <span class="hljs-string">ubuntu-latest</span>
+    
+    <span class="hljs-attr">steps:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/checkout@v3</span>
+    
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Run</span> <span class="hljs-string">Trivy</span> <span class="hljs-string">SCA</span>
+      <span class="hljs-attr">uses:</span> <span class="hljs-string">aquasecurity/trivy-action@master</span>
+      <span class="hljs-attr">with:</span>
+        <span class="hljs-attr">scan-type:</span> <span class="hljs-string">&#x27;fs&#x27;</span>
+        <span class="hljs-attr">format:</span> <span class="hljs-string">&#x27;sarif&#x27;</span>
+        <span class="hljs-attr">output:</span> <span class="hljs-string">&#x27;trivy-sca.sarif&#x27;</span>
+    
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Run</span> <span class="hljs-string">gosec</span> <span class="hljs-string">SAST</span>
+      <span class="hljs-attr">uses:</span> <span class="hljs-string">securecodewarrior/github-action-gosec@master</span>
+      <span class="hljs-attr">with:</span>
+        <span class="hljs-attr">args:</span> <span class="hljs-string">&#x27;./...&#x27;</span>
+    
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Upload</span> <span class="hljs-string">SARIF</span> <span class="hljs-string">files</span>
+      <span class="hljs-attr">uses:</span> <span class="hljs-string">github/codeql-action/upload-sarif@v2</span>
+      <span class="hljs-attr">with:</span>
+        <span class="hljs-attr">sarif_file:</span> <span class="hljs-string">trivy-sca.sarif</span>
+  
+  <span class="hljs-attr">docker:</span>
+    <span class="hljs-attr">needs:</span> [<span class="hljs-string">build-and-test</span>, <span class="hljs-string">lint</span>, <span class="hljs-string">security</span>]
+    <span class="hljs-attr">runs-on:</span> <span class="hljs-string">ubuntu-latest</span>
+    
+    <span class="hljs-attr">steps:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/checkout@v3</span>
+    
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Configure</span> <span class="hljs-string">AWS</span> <span class="hljs-string">credentials</span>
+      <span class="hljs-attr">uses:</span> <span class="hljs-string">aws-actions/configure-aws-credentials@v2</span>
+      <span class="hljs-attr">with:</span>
+        <span class="hljs-attr">aws-access-key-id:</span> <span class="hljs-string">${{</span> <span class="hljs-string">secrets.AWS_ACCESS_KEY_ID</span> <span class="hljs-string">}}</span>
+        <span class="hljs-attr">aws-secret-access-key:</span> <span class="hljs-string">${{</span> <span class="hljs-string">secrets.AWS_SECRET_ACCESS_KEY</span> <span class="hljs-string">}}</span>
+        <span class="hljs-attr">aws-region:</span> <span class="hljs-string">us-east-1</span>
+    
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Login</span> <span class="hljs-string">to</span> <span class="hljs-string">Amazon</span> <span class="hljs-string">ECR</span>
+      <span class="hljs-attr">id:</span> <span class="hljs-string">login-ecr</span>
+      <span class="hljs-attr">uses:</span> <span class="hljs-string">aws-actions/amazon-ecr-login@v1</span>
+    
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Build</span> <span class="hljs-string">Docker</span> <span class="hljs-string">image</span>
+      <span class="hljs-attr">run:</span> <span class="hljs-string">|
+        docker build -t ${{ github.sha }} .
+</span>    
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Scan</span> <span class="hljs-string">image</span> <span class="hljs-string">with</span> <span class="hljs-string">Trivy</span>
+      <span class="hljs-attr">uses:</span> <span class="hljs-string">aquasecurity/trivy-action@master</span>
+      <span class="hljs-attr">with:</span>
+        <span class="hljs-attr">scan-type:</span> <span class="hljs-string">&#x27;image&#x27;</span>
+        <span class="hljs-attr">image-ref:</span> <span class="hljs-string">${{</span> <span class="hljs-string">github.sha</span> <span class="hljs-string">}}</span>
+        <span class="hljs-attr">format:</span> <span class="hljs-string">&#x27;sarif&#x27;</span>
+        <span class="hljs-attr">output:</span> <span class="hljs-string">&#x27;trivy-image.sarif&#x27;</span>
+    
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Push</span> <span class="hljs-string">to</span> <span class="hljs-string">ECR</span>
+      <span class="hljs-attr">run:</span> <span class="hljs-string">|
+        ECR_URI=${{ steps.login-ecr.outputs.registry }}/${{ github.repository }}
+        docker tag ${{ github.sha }} $ECR_URI:${{ github.sha }}
+        docker push $ECR_URI:${{ github.sha }}
+</span>    
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Update</span> <span class="hljs-string">GitOps</span> <span class="hljs-string">repo</span>
+      <span class="hljs-attr">run:</span> <span class="hljs-string">|
+        # Script para atualizar tag no repo GitOps
+        ./scripts/update-gitops.sh ${{ github.sha }}
+</span></code></pre>
+		<h3 id="22-configuração-para-python-services"
+			>2.2. Configuração para Python Services</h3
+		>
+		<p>Para serviços Python, ajuste o workflow:</p>
+		<pre><code class="language-yaml"><span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Set</span> <span class="hljs-string">up</span> <span class="hljs-string">Python</span>
+  <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/setup-python@v4</span>
+  <span class="hljs-attr">with:</span>
+    <span class="hljs-attr">python-version:</span> <span class="hljs-string">&#x27;3.9&#x27;</span>
+
+<span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Install</span> <span class="hljs-string">dependencies</span>
+  <span class="hljs-attr">run:</span> <span class="hljs-string">|
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+</span>
+<span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Run</span> <span class="hljs-string">pylint</span>
+  <span class="hljs-attr">run:</span> <span class="hljs-string">pylint</span> <span class="hljs-string">$(find</span> <span class="hljs-string">.</span> <span class="hljs-string">-name</span> <span class="hljs-string">&quot;*.py&quot;</span> <span class="hljs-string">-not</span> <span class="hljs-string">-path</span> <span class="hljs-string">&quot;./tests/*&quot;</span><span class="hljs-string">)</span>
+
+<span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Run</span> <span class="hljs-string">bandit</span> <span class="hljs-string">(SAST)</span>
+  <span class="hljs-attr">run:</span> <span class="hljs-string">bandit</span> <span class="hljs-string">-r</span> <span class="hljs-string">.</span> <span class="hljs-string">-f</span> <span class="hljs-string">json</span> <span class="hljs-string">-o</span> <span class="hljs-string">bandit-report.json</span>
+</code></pre>
+		<hr />
+		<h2 id="etapa-3-gitops-com-argocd">ETAPA 3: GitOps com ArgoCD</h2>
+		<h3 id="31-repositório-gitops">3.1. Repositório GitOps</h3>
+		<p>Crie um repo separado <code>togglemaster-gitops</code> com:</p>
+		<pre><code>gitops/
+├── argocd/
+│   ├── applications/
+│   │   ├── auth-service.yaml
+│   │   ├── flag-service.yaml
+│   │   └── ...
+│   └── projects/
+│       └── togglemaster.yaml
+└── manifests/
+    ├── namespace.yaml
+    ├── secrets.yaml
+    ├── configmap.yaml
+    └── deployments/
+        ├── auth-service.yaml
+        └── ...
+</code></pre>
+		<h3 id="32-instalação-argocd">3.2. Instalação ArgoCD</h3>
+		<p><strong>Cole no terminal:</strong></p>
+		<pre><code class="language-bash"><span class="hljs-comment"># Via Helm</span>
+helm repo add argo https://argoproj.github.io/argo-helm
+helm install argocd argo/argo-cd --namespace argocd --create-namespace
+</code></pre>
+		<p
+			>Ou via Terraform: resource &quot;helm_release&quot; &quot;argocd&quot; {
+			name = &quot;argocd&quot; repository = &quot;<a
+				href="https://argoproj.github.io/argo-helm"
+				>https://argoproj.github.io/argo-helm</a
+			>&quot; chart = &quot;argo-cd&quot; namespace = &quot;argocd&quot; }</p
+		>
+		<pre><code>
+### 3.3. Application ArgoCD
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: auth-service
+  namespace: argocd
+spec:
+  project: togglemaster
+  source:
+    repoURL: https://github.com/YOUR_ORG/togglemaster-gitops
+    targetRevision: HEAD
+    path: manifests/deployments/auth-service
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: togglemaster
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+</code></pre>
+		<h3 id="34-script-de-update-gitops">3.4. Script de Update GitOps</h3>
+		<p><code>scripts/update-gitops.sh</code>:</p>
+		<pre><code class="language-bash"><span class="hljs-meta">#!/bin/bash</span>
+NEW_TAG=<span class="hljs-variable">$1</span>
+SERVICE=<span class="hljs-variable">$2</span>
+
+<span class="hljs-comment"># Clone repo gitops</span>
+git <span class="hljs-built_in">clone</span> https://github.com/YOUR_ORG/togglemaster-gitops.git
+<span class="hljs-built_in">cd</span> togglemaster-gitops
+
+<span class="hljs-comment"># Update deployment.yaml</span>
+sed -i <span class="hljs-string">&quot;s|image:.*|image: YOUR_ECR_URI/<span class="hljs-variable">$SERVICE</span>:<span class="hljs-variable">$NEW_TAG</span>|g&quot;</span> manifests/deployments/<span class="hljs-variable">$SERVICE</span>/deployment.yaml
+
+<span class="hljs-comment"># Commit and push</span>
+git add .
+git commit -m <span class="hljs-string">&quot;Update <span class="hljs-variable">$SERVICE</span> to <span class="hljs-variable">$NEW_TAG</span>&quot;</span>
+git push
+</code></pre>
+		<hr />
+		<h2 id="etapa-4-testes-e-validação">ETAPA 4: Testes e Validação</h2>
+		<h3 id="41-validar-infraestrutura">4.1. Validar Infraestrutura</h3>
+		<p><strong>Cole no terminal:</strong></p>
+		<pre><code class="language-bash">terraform plan  <span class="hljs-comment"># Deve mostrar no changes</span>
+kubectl get nodes  <span class="hljs-comment"># Nodes ativos</span>
+kubectl get pods -n togglemaster  <span class="hljs-comment"># Aplicações rodando</span>
+</code></pre>
+		<h3 id="42-testar-pipeline">4.2. Testar Pipeline</h3>
+		<ol>
+			<li>Faça commit com vulnerabilidade intencional</li>
+			<li>Pipeline deve falhar no security scan</li>
+			<li>Corrija e veja passar</li>
+			<li>Verifique imagem no ECR</li>
+		</ol>
+		<h3 id="43-testar-gitops">4.3. Testar GitOps</h3>
+		<ol>
+			<li>Pipeline atualiza tag no GitOps repo</li>
+			<li>ArgoCD detecta mudança</li>
+			<li>Sync automático no cluster</li>
+			<li>Verifique nova versão rodando</li>
+		</ol>
+		<hr />
+		<h2 id="etapa-5-entregáveis">ETAPA 5: Entregáveis</h2>
+		<h3 id="vídeo-de-demonstração-até-20-min"
+			>Vídeo de Demonstração (até 20 min)</h3
+		>
+		<ul>
+			<li
+				><strong>IaC</strong>: <code>terraform plan</code> e
+				<code>apply</code></li
+			>
+			<li
+				><strong>DevSecOps</strong>: Pipeline falhando/correndo com erro
+				intencional</li
+			>
+			<li><strong>GitOps</strong>: Update automático no repo GitOps</li>
+			<li><strong>ArgoCD</strong>: Sync automático das aplicações</li>
+		</ul>
+		<h3 id="código-fonte">Código Fonte</h3>
+		<ul>
+			<li><code>terraform/</code> - IaC completo</li>
+			<li><code>.github/workflows/</code> - Pipelines CI/CD</li>
+			<li><code>gitops/</code> - Manifests para ArgoCD</li>
+		</ul>
+		<h3 id="relatório">Relatório</h3>
+		<ul>
+			<li>Nomes dos participantes</li>
+			<li>Links do vídeo e docs</li>
+			<li>Desafios e decisões</li>
+			<li>Print custos AWS</li>
+		</ul>
+		<hr />
+		<h2 id="troubleshooting">Troubleshooting</h2>
+		<ul>
+			<li><strong>AWS Academy</strong>: Sempre use LabRole, não crie IAM</li>
+			<li><strong>ArgoCD</strong>: Verifique RBAC e permissões</li>
+			<li><strong>Pipeline</strong>: Configure secrets AWS no GitHub</li>
+			<li><strong>Terraform State</strong>: Use S3 backend com lock</li>
+		</ul>
+		<h2 id="roteiro-do-vídeo">Roteiro do Vídeo</h2>
+		<ol>
+			<li><strong>IaC</strong>: Demo terraform apply criando recursos</li>
+			<li><strong>Pipeline</strong>: Trigger manual com erro de segurança</li>
+			<li><strong>Correção</strong>: Fix e re-run passando</li>
+			<li><strong>GitOps</strong>: ArgoCD interface mostrando sync</li>
+			<li><strong>Custos</strong>: Estimativa AWS Academy</li>
+		</ol>
+		<hr />
+		<h2 id="etapa-1-imagens-docker--amazon-ecr"
+			>ETAPA 1: Imagens Docker &amp; Amazon ECR</h2
+		>
+		<h3 id="11-criar-repositórios-no-ecr">1.1. Criar Repositórios no ECR</h3>
+		<ol>
+			<li>Acesse o console AWS</li>
+			<li>Pesquise por <strong>ECR</strong> (Elastic Container Registry)</li>
+			<li
+				>Vá para <strong>Private registry</strong> &gt;
+				<strong>Repositories</strong></li
+			>
+			<li>Clique em <strong>Create repository</strong></li>
+			<li>Crie os 5 repositórios:</li>
+		</ol>
+		<table>
+			<thead>
+				<tr>
+					<th>Nome do Repositório</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>auth-service</td>
+				</tr>
+				<tr>
+					<td>flag-service</td>
+				</tr>
+				<tr>
+					<td>targeting-service</td>
+				</tr>
+				<tr>
+					<td>evaluation-service</td>
+				</tr>
+				<tr>
+					<td>analytics-service</td>
+				</tr>
+			</tbody>
+		</table>
+		<h3 id="12-autenticar-no-ecr">1.2. Autenticar no ECR</h3>
+		<pre><code class="language-bash"><span class="hljs-comment"># Substitua &lt;SEU_ID_ECR&gt; pelo seu ID da AWS (ex: 123456789012)</span>
+aws ecr get-login-password --region us-east-1 | \
+  docker login --username AWS --password-stdin \
+  &lt;SEU_ID_ECR&gt;.dkr.ecr.us-east-1.amazonaws.com
+</code></pre>
+		<h3 id="13-build-e-push-de-cada-serviço"
+			>1.3. Build e Push de Cada Serviço</h3
+		>
+		<pre><code class="language-bash"><span class="hljs-comment"># ==================== AUTH SERVICE ====================</span>
+<span class="hljs-built_in">cd</span> auth-service
+docker build -t auth-service .
+docker tag auth-service:latest 891377095805.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
+docker push 891377095805.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
+<span class="hljs-built_in">cd</span> ..
+
+<span class="hljs-comment"># ==================== FLAG SERVICE ====================</span>
+<span class="hljs-built_in">cd</span> flag-service
+docker build -t flag-service .
+docker tag flag-service:latest &lt;SEU_ID_ECR&gt;.dkr.ecr.us-east-1.amazonaws.com/flag-service:latest
+docker push &lt;SEU_ID_ECR&gt;.dkr.ecr.us-east-1.amazonaws.com/flag-service:latest
+<span class="hljs-built_in">cd</span> ..
+
+<span class="hljs-comment"># ==================== TARGETING SERVICE ====================</span>
+<span class="hljs-built_in">cd</span> targeting-service
+docker build -t targeting-service .
+docker tag targeting-service:latest &lt;SEU_ID_ECR&gt;.dkr.ecr.us-east-1.amazonaws.com/targeting-service:latest
+docker push &lt;SEU_ID_ECR&gt;.dkr.ecr.us-east-1.amazonaws.com/targeting-service:latest
+<span class="hljs-built_in">cd</span> ..
+
+<span class="hljs-comment"># ==================== EVALUATION SERVICE ====================</span>
+<span class="hljs-built_in">cd</span> evaluation-service
+docker build -t evaluation-service .
+docker tag evaluation-service:latest &lt;SEU_ID_ECR&gt;.dkr.ecr.us-east-1.amazonaws.com/evaluation-service:latest
+docker push &lt;SEU_ID_ECR&gt;.dkr.ecr.us-east-1.amazonaws.com/evaluation-service:latest
+<span class="hljs-built_in">cd</span> ..
+
+<span class="hljs-comment"># ==================== ANALYTICS SERVICE ====================</span>
+<span class="hljs-built_in">cd</span> analytics-service
+docker build -t analytics-service .
+docker tag analytics-service:latest &lt;SEU_ID_ECR&gt;.dkr.ecr.us-east-1.amazonaws.com/analytics-service:latest
+docker push &lt;SEU_ID_ECR&gt;.dkr.ecr.us-east-1.amazonaws.com/analytics-service:latest
+<span class="hljs-built_in">cd</span> ..
+</code></pre>
+		<h3 id="14-verificar-imagens-no-ecr">1.4. Verificar Imagens no ECR</h3>
+		<p
+			>No console ECR, cada repositório deve mostrar a imagem com tag
+			<code>latest</code>.</p
+		>
+		<hr />
+		<h2 id="etapa-2-infraestrutura-aws">ETAPA 2: Infraestrutura AWS</h2>
+		<p>Use a região <strong>us-east-1</strong> para todos os recursos.</p>
+		<h3 id="21-rds-postgresql-3-instâncias"
+			>2.1. RDS PostgreSQL (3 Instâncias)</h3
+		>
+		<h4 id="banco-1-auth-db">Banco 1: auth-db</h4>
+		<ol>
+			<li
+				>Console AWS &gt; <strong>RDS</strong> &gt;
+				<strong>Create database</strong></li
+			>
+			<li>Configure:</li>
+		</ol>
+		<table>
+			<thead>
+				<tr>
+					<th>Campo</th>
+					<th>Valor</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>Engine</td>
+					<td>PostgreSQL</td>
+				</tr>
+				<tr>
+					<td>Engine version</td>
+					<td>13.x</td>
+				</tr>
+				<tr>
+					<td>Template</td>
+					<td>Free tier</td>
+				</tr>
+				<tr>
+					<td>DB instance identifier</td>
+					<td><code>togglemaster-auth</code></td>
+				</tr>
+				<tr>
+					<td>Master username</td>
+					<td><code>admin</code></td>
+				</tr>
+				<tr>
+					<td>Master password</td>
+					<td>Defina uma senha forte e <strong>ANOTE</strong></td>
+				</tr>
+				<tr>
+					<td>Initial database name</td>
+					<td><code>auth_db</code></td>
+				</tr>
+				<tr>
+					<td>Instance class</td>
+					<td><code>db.t3.micro</code></td>
+				</tr>
+			</tbody>
+		</table>
+		<ol start="3">
+			<li>
+				<p>Em <strong>Connectivity</strong>:</p>
+				<ul>
+					<li>VPC: Default VPC</li>
+					<li>Public access: <strong>Yes</strong></li>
+					<li
+						>VPC security group: Criar novo ou usar <strong>default</strong></li
+					>
+					<li>Database port: 5432</li>
+				</ul>
+			</li>
+			<li>
+				<p>Clique em <strong>Create database</strong></p>
+			</li>
+			<li>
+				<p
+					><strong>ANOTE O ENDPOINT</strong> (algo como
+					<code>togglemaster-auth.xxxx.us-east-1.rds.amazonaws.com</code>)</p
+				>
+			</li>
+		</ol>
+		<h4 id="banco-2-flags-db">Banco 2: flags-db</h4>
+		<p>Repita o processo acima com:</p>
+		<table>
+			<thead>
+				<tr>
+					<th>Campo</th>
+					<th>Valor</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>DB instance identifier</td>
+					<td><code>togglemaster-flags</code></td>
+				</tr>
+				<tr>
+					<td>Initial database name</td>
+					<td><code>flags_db</code></td>
+				</tr>
+			</tbody>
+		</table>
+		<h4 id="banco-3-targeting-db">Banco 3: targeting-db</h4>
+		<p>Repita o processo acima com:</p>
+		<table>
+			<thead>
+				<tr>
+					<th>Campo</th>
+					<th>Valor</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>DB instance identifier</td>
+					<td><code>togglemaster-targeting</code></td>
+				</tr>
+				<tr>
+					<td>Initial database name</td>
+					<td><code>targeting_db</code></td>
+				</tr>
+			</tbody>
+		</table>
+		<p
+			>⏱️ <strong>Tempo estimado:</strong> 10-15 minutos para cada banco ficar
+			disponível.</p
+		>
+		<h3 id="22-elasticache-redis">2.2. ElastiCache Redis</h3>
+		<ol>
+			<li>
+				<p
+					>Console AWS &gt; <strong>ElastiCache</strong> &gt;
+					<strong>Redis</strong> &gt; <strong>Create</strong></p
+				>
+			</li>
+			<li>
+				<p>Configure:</p>
+			</li>
+		</ol>
+		<table>
+			<thead>
+				<tr>
+					<th>Campo</th>
+					<th>Valor</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>Cluster name</td>
+					<td><code>togglemaster-cache</code></td>
+				</tr>
+				<tr>
+					<td>Cluster endpoint</td>
+					<td>Desabilitar</td>
+				</tr>
+				<tr>
+					<td>Engine version</td>
+					<td>7.x</td>
+				</tr>
+				<tr>
+					<td>Node type</td>
+					<td><code>cache.t3.micro</code></td>
+				</tr>
+				<tr>
+					<td>Number of replicas</td>
+					<td>0</td>
+				</tr>
+				<tr>
+					<td>Multi-AZ</td>
+					<td>No</td>
+				</tr>
+				<tr>
+					<td>Subnet group</td>
+					<td>Default</td>
+				</tr>
+			</tbody>
+		</table>
+		<ol start="3">
+			<li>
+				<p>Em <strong>Security</strong>:</p>
+				<ul>
+					<li>Security group: Criar ou usar default</li>
+					<li>Port: 6379</li>
+				</ul>
+			</li>
+			<li>
+				<p>Clique em <strong>Create</strong></p>
+			</li>
+			<li>
+				<p
+					><strong>ANOTE O ENDPOINT PRIMÁRIO</strong> (algo como
+					<code>togglemaster-cache.xxxx.use1.cache.amazonaws.com:6379</code>)</p
+				>
+			</li>
+		</ol>
+		<h3 id="23-dynamodb">2.3. DynamoDB</h3>
+		<ol>
+			<li>
+				<p
+					>Console AWS &gt; <strong>DynamoDB</strong> &gt;
+					<strong>Create table</strong></p
+				>
+			</li>
+			<li>
+				<p>Configure:</p>
+			</li>
+		</ol>
+		<table>
+			<thead>
+				<tr>
+					<th>Campo</th>
+					<th>Valor</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>Table name</td>
+					<td><code>ToggleMasterAnalytics</code></td>
+				</tr>
+				<tr>
+					<td>Partition key</td>
+					<td><code>requestId</code> (String)</td>
+				</tr>
+				<tr>
+					<td>Sort key</td>
+					<td>Deixar vazio</td>
+				</tr>
+				<tr>
+					<td>Table capacity class</td>
+					<td>On-demand</td>
+				</tr>
+			</tbody>
+		</table>
+		<ol start="3">
+			<li>Clique em <strong>Create table</strong></li>
+		</ol>
+		<h3 id="24-sqs">2.4. SQS</h3>
+		<ol>
+			<li>
+				<p
+					>Console AWS &gt; <strong>SQS</strong> &gt;
+					<strong>Create queue</strong></p
+				>
+			</li>
+			<li>
+				<p>Configure:</p>
+			</li>
+		</ol>
+		<table>
+			<thead>
+				<tr>
+					<th>Campo</th>
+					<th>Valor</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>Type</td>
+					<td>Standard</td>
+				</tr>
+				<tr>
+					<td>Queue name</td>
+					<td><code>togglemaster-analytics-queue</code></td>
+				</tr>
+			</tbody>
+		</table>
+		<ol start="3">
+			<li>
+				<p>Clique em <strong>Create queue</strong></p>
+			</li>
+			<li>
+				<p
+					><strong>ANOTE A URL DA FILA</strong> (algo como
+					<code
+						>https://sqs.us-east-1.amazonaws.com/123456789012/togglemaster-analytics-queue</code
+					>)</p
+				>
+			</li>
+		</ol>
+		<hr />
+		<h2 id="etapa-3-kubernetes-eks">ETAPA 3: Kubernetes (EKS)</h2>
+		<h3 id="31-pré-requisitos">3.1. Pré-requisitos</h3>
+		<ul>
+			<li>AWS CLI instalado e configurado</li>
+			<li>kubectl instalado</li>
+			<li>Acesso à console AWS (se aplicável)</li>
+		</ul>
+		<h3 id="32-criar-cluster-eks">3.2. Criar Cluster EKS</h3>
+		<ol>
+			<li>
+				<p
+					>Console AWS &gt; <strong>EKS</strong> &gt;
+					<strong>Create cluster</strong></p
+				>
+			</li>
+			<li>
+				<p>Em <strong>Configure cluster</strong>:</p>
+			</li>
+		</ol>
+		<table>
+			<thead>
+				<tr>
+					<th>Campo</th>
+					<th>Valor</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>Name</td>
+					<td><code>togglemaster-cluster</code></td>
+				</tr>
+				<tr>
+					<td>Kubernetes version</td>
+					<td>1.28 ou superior</td>
+				</tr>
+				<tr>
+					<td>Cluster service role</td>
+					<td>Criar nova role ou usar existente</td>
+				</tr>
+			</tbody>
+		</table>
+		<ol start="3">
+			<li>Em <strong>Specify networking</strong>:</li>
+		</ol>
+		<table>
+			<thead>
+				<tr>
+					<th>Campo</th>
+					<th>Valor</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>VPC</td>
+					<td>Default VPC</td>
+				</tr>
+				<tr>
+					<td>Cluster endpoint access</td>
+					<td>Public</td>
+				</tr>
+				<tr>
+					<td>Subnets</td>
+					<td>Selecione TODAS as subnets</td>
+				</tr>
+			</tbody>
+		</table>
+		<ol start="4">
+			<li>
+				<p>Em <strong>Configure observability</strong>:</p>
+				<ul>
+					<li>Deixe o padrão</li>
+				</ul>
+			</li>
+			<li>
+				<p>Em <strong>Select cluster compute platform</strong> (IMPORTANTE):</p>
+			</li>
+		</ol>
+		<p><strong>⚠️ RECOMENDADO: Escolha &quot;EKS Auto Mode&quot;</strong></p>
+		<table>
+			<thead>
+				<tr>
+					<th>Opção</th>
+					<th>Descrição</th>
+					<th>Recomendação</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><strong>EKS Auto Mode</strong></td>
+					<td>Provisionamento automático de nós com Karpenter</td>
+					<td>✅ RECOMENDADO</td>
+				</tr>
+				<tr>
+					<td><strong>Standard</strong></td>
+					<td>Node Groups tradicionais</td>
+					<td>❌ Não recomendado para AWS Academy</td>
+				</tr>
+			</tbody>
+		</table>
+		<p><strong>Por que EKS Auto Mode?</strong></p>
+		<ul>
+			<li>Provisiona nós automaticamente conforme demanda</li>
+			<li>Usa Karpenter integrado para escalonamento</li>
+			<li
+				>Evita problemas de IMDS (Instance Metadata Service) comuns em AWS
+				Academy</li
+			>
+			<li>Nós Bottlerocket com melhor compatibilidade</li>
+		</ul>
+		<ol start="6">
+			<li>Clique em <strong>Create cluster</strong></li>
+		</ol>
+		<p>⏱️ <strong>Tempo estimado:</strong> 10-20 minutos</p>
+		<h3 id="33-instalar-add-ons-básicos-antes-dos-nós-️-obrigatório"
+			>3.3. Instalar Add-ons Básicos (ANTES dos nós) ⚠️ OBRIGATÓRIO</h3
+		>
+		<p
+			><strong>⚠️ IMPORTANTE:</strong> Os add-ons básicos (VPC CNI, CoreDNS,
+			kube-proxy) DEVEM ser instalados <strong>ANTES</strong> que os nós sejam
+			provisionados. Sem eles, os pods não conseguirão se comunicar
+			corretamente.</p
+		>
+		<h4 id="330-ordem-correta-de-criação">3.3.0. Ordem Correta de Criação</h4>
+		<pre><code>┌─────────────────────────────────────────────────────────────┐
+│  ORDEM CORRETA DE CRIAÇÃO DO CLUSTER EKS                    │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  1️⃣ Criar Cluster EKS com EKS Auto Mode                    │
+│         ↓                                                    │
+│  2️⃣ Instalar Add-ons BÁSICOS (VPC CNI, CoreDNS, kube-proxy)│
+│         ↓                                                    │
+│  3️⃣ Conectar kubectl                                        │
+│         ↓                                                    │
+│  4️⃣ Configurar VPC e Security Groups                        │
+│         ↓                                                    │
+│  5️⃣ Instalar Metrics Server (para HPA)                     │
+│         ↓                                                    │
+│  6️⃣ Instalar NGINX Ingress Controller                      │
+│         ↓                                                    │
+│  7️⃣ Deploy das aplicações                                   │
+│         ↓                                                    │
+│  8️⃣ Configurar credenciais AWS (via Secret)                │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+</code></pre>
+		<h4 id="331-instalar-add-ons-pela-interface-do-console-aws-recomendado"
+			>3.3.1. Instalar Add-ons pela Interface do Console AWS (RECOMENDADO)</h4
+		>
+		<ol>
+			<li
+				>Acesse o <strong>Console AWS</strong> &gt; <strong>EKS</strong> &gt;
+				Selecione o cluster <code>togglemaster-cluster</code></li
+			>
+			<li>No menu lateral, clique em <strong>Add-ons</strong></li>
+			<li
+				>Clique em <strong>Get more add-ons</strong> ou
+				<strong>Add new</strong></li
+			>
+			<li>Instale os 3 add-ons <strong>OBRIGATÓRIOS</strong> (nesta ordem):</li>
+		</ol>
+		<table>
+			<thead>
+				<tr>
+					<th>Ordem</th>
+					<th>Add-on</th>
+					<th>Descrição</th>
+					<th>Quando Instalar</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>1º</td>
+					<td><strong>Amazon VPC CNI</strong></td>
+					<td>Rede de pods na VPC</td>
+					<td>⚠️ ANTES dos nós</td>
+				</tr>
+				<tr>
+					<td>2º</td>
+					<td><strong>CoreDNS</strong></td>
+					<td>Resolução de DNS interno</td>
+					<td>⚠️ ANTES dos nós</td>
+				</tr>
+				<tr>
+					<td>3º</td>
+					<td><strong>kube-proxy</strong></td>
+					<td>Proxy de rede Kubernetes</td>
+					<td>⚠️ ANTES dos nós</td>
+				</tr>
+				<tr>
+					<td>4º</td>
+					<td><strong>Metrics Server</strong></td>
+					<td>Métricas para HPA</td>
+					<td>✅ DEPOIS dos nós</td>
+				</tr>
+			</tbody>
+		</table>
+		<p><strong>Passo a passo para cada add-on:</strong></p>
+		<ol>
+			<li>Selecione o add-on desejado</li>
+			<li>Escolha a versão mais recente compatível com seu cluster</li>
+			<li>Em <strong>IAM role</strong>, deixe em branco para usar o padrão</li>
+			<li>Clique em <strong>Add</strong> ou <strong>Create</strong></li>
+			<li
+				>Aguarde o status ficar <strong>Active</strong> antes de passar para o
+				próximo</li
+			>
+		</ol>
+		<p><strong>Verificar instalação via console:</strong></p>
+		<ul>
+			<li
+				>Na aba <strong>Add-ons</strong>, todos devem mostrar status
+				<strong>Active</strong></li
+			>
+		</ul>
+		<hr />
+		<h4 id="332-amazon-vpc-cni-crítico---instalar-primeiro"
+			>3.3.2. Amazon VPC CNI (CRÍTICO - Instalar PRIMEIRO)</h4
+		>
+		<p
+			><strong
+				>⚠️ OBRIGATÓRIO - Instalar ANTES dos nós serem provisionados</strong
+			></p
+		>
+		<p
+			>O Amazon VPC CNI permite que os pods tenham IPs da VPC e se comuniquem
+			com serviços AWS.</p
+		>
+		<p><strong>Instalar via Console AWS:</strong></p>
+		<ol>
+			<li
+				>EKS &gt; Cluster &gt; Add-ons &gt;
+				<strong>Get more add-ons</strong></li
+			>
+			<li>Selecione <strong>Amazon VPC CNI</strong></li>
+			<li>Escolha a versão mais recente</li>
+			<li>Clique em <strong>Add</strong></li>
+			<li>Aguarde o status ficar <strong>Active</strong></li>
+		</ol>
+		<p><strong>Sintomas de falta do VPC CNI:</strong></p>
+		<ul>
+			<li>Pods não conseguem obter IP da VPC</li>
+			<li>Erro de &quot;network not ready&quot; ao criar pods</li>
+			<li>Conectividade intermitente entre pods e serviços AWS</li>
+		</ul>
+		<hr />
+		<h4 id="333-coredns-crítico---instalar-segundo"
+			>3.3.3. CoreDNS (CRÍTICO - Instalar SEGUNDO)</h4
+		>
+		<p
+			><strong
+				>⚠️ OBRIGATÓRIO - Instalar ANTES dos nós serem provisionados</strong
+			></p
+		>
+		<p
+			>O CoreDNS permite que os pods resolvam nomes de serviços internos e
+			externos.</p
+		>
+		<p><strong>Instalar via Console AWS:</strong></p>
+		<ol>
+			<li
+				>EKS &gt; Cluster &gt; Add-ons &gt;
+				<strong>Get more add-ons</strong></li
+			>
+			<li>Selecione <strong>CoreDNS</strong></li>
+			<li>Escolha a versão mais recente</li>
+			<li>Clique em <strong>Add</strong></li>
+			<li>Aguarde o status ficar <strong>Active</strong></li>
+		</ol>
+		<p><strong>Sintomas de falta do CoreDNS:</strong></p>
+		<ul>
+			<li>Erro de &quot;no such host&quot; ao resolver nomes de serviços</li>
+			<li>Pods não conseguem acessar outros serviços pelo nome</li>
+		</ul>
+		<hr />
+		<h4 id="334-kube-proxy-crítico---instalar-terceiro"
+			>3.3.4. kube-proxy (CRÍTICO - Instalar TERCEIRO)</h4
+		>
+		<p
+			><strong
+				>⚠️ OBRIGATÓRIO - Instalar ANTES dos nós serem provisionados</strong
+			></p
+		>
+		<p>O kube-proxy gerencia as regras de rede para serviços Kubernetes.</p>
+		<p><strong>Instalar via Console AWS:</strong></p>
+		<ol>
+			<li
+				>EKS &gt; Cluster &gt; Add-ons &gt;
+				<strong>Get more add-ons</strong></li
+			>
+			<li>Selecione <strong>kube-proxy</strong></li>
+			<li>Escolha a versão mais recente</li>
+			<li>Clique em <strong>Add</strong></li>
+			<li>Aguarde o status ficar <strong>Active</strong></li>
+		</ol>
+		<p><strong>Sintomas de falta do kube-proxy:</strong></p>
+		<ul>
+			<li>Erro de timeout ao conectar ao Redis/ElastiCache</li>
+			<li
+				>Pods conseguem resolver DNS mas não conseguem estabelecer conexão
+				TCP</li
+			>
+		</ul>
+		<hr />
+		<h3 id="34-eks-auto-mode-nós-automáticos"
+			>3.4. EKS Auto Mode (Nós Automáticos)</h3
+		>
+		<p
+			><strong>⚠️ IMPORTANTE:</strong> Com o EKS Auto Mode habilitado, você NÃO
+			precisa criar Node Groups manualmente. O Karpenter integrado provisiona
+			nós automaticamente.</p
+		>
+		<p><strong>Verificar se o EKS Auto Mode está ativo:</strong></p>
+		<ol>
+			<li>No console EKS, vá em <strong>Compute</strong></li>
+			<li
+				>Você deve ver uma seção <strong>EKS Auto Mode</strong> com Node
+				Pools</li
+			>
+			<li>Os nós são criados automaticamente quando há pods para agendar</li>
+		</ol>
+		<p><strong>Vantagens do EKS Auto Mode:</strong></p>
+		<ul>
+			<li>✅ Nós provisionados automaticamente sob demanda</li>
+			<li>✅ Usa imagens Bottlerocket (mais estáveis)</li>
+			<li>✅ Escalonamento automático com Karpenter</li>
+			<li>✅ Evita problemas de IMDS do AWS Academy</li>
+		</ul>
+		<p><strong>⚠️ NÃO crie Node Groups tradicionais no AWS Academy:</strong></p>
+		<ul>
+			<li
+				>Node Groups podem falhar com erro <code>NodeCreationFailure</code></li
+			>
+			<li>Problemas de IMDS (Instance Metadata Service)</li>
+			<li>Credenciais não são propagadas corretamente</li>
+		</ul>
+		<p>Se você acidentalmente criou um Node Group e ele falhou, delete-o:</p>
+		<pre><code class="language-bash">aws eks delete-nodegroup --cluster-name togglemaster-cluster --nodegroup-name togglemaster-workers --region us-east-1
+</code></pre>
+		<h3 id="35-conectar-kubectl-ao-cluster"
+			>3.5. Conectar kubectl ao Cluster</h3
+		>
+		<pre><code class="language-bash"><span class="hljs-comment"># Atualizar kubeconfig</span>
+aws eks update-kubeconfig --region us-east-1 --name togglemaster-cluster
+
+<span class="hljs-comment"># Verificar conexão (deve mostrar os nodes)</span>
+kubectl get nodes
+
+<span class="hljs-comment"># Verificar cluster</span>
+kubectl cluster-info
+</code></pre>
+		<h3 id="36-configuração-de-vpc-e-security-groups-crítico"
+			>3.6. Configuração de VPC e Security Groups (CRÍTICO)</h3
+		>
+		<p
+			><strong>⚠️ IMPORTANTE:</strong> Esta etapa é OBRIGATÓRIA para o
+			funcionamento correto do cluster. Sem ela, o LoadBalancer e o DNS não
+			funcionarão.</p
+		>
+		<h4 id="361-adicionar-tags-às-subnets">3.6.1. Adicionar Tags às Subnets</h4>
+		<p
+			>As subnets precisam de tags específicas para que o AWS Load Balancer
+			Controller funcione corretamente.</p
+		>
+		<pre><code class="language-bash"><span class="hljs-comment"># Obter IDs das subnets do cluster</span>
+aws ec2 describe-subnets --filters <span class="hljs-string">&quot;Name=vpc-id,Values=<span class="hljs-subst">$(aws eks describe-cluster --name togglemaster-cluster --query &#x27;cluster.resourcesVpcConfig.vpcId&#x27; --output text)</span>&quot;</span> --query <span class="hljs-string">&#x27;Subnets[*].SubnetId&#x27;</span> --output text
+
+<span class="hljs-comment"># Para CADA subnet listada, adicionar as tags:</span>
+<span class="hljs-keyword">for</span> subnet <span class="hljs-keyword">in</span> &lt;SUBNET_ID_1&gt; &lt;SUBNET_ID_2&gt; &lt;SUBNET_ID_3&gt; &lt;SUBNET_ID_4&gt; &lt;SUBNET_ID_5&gt;; <span class="hljs-keyword">do</span>
+  aws ec2 create-tags --resources <span class="hljs-variable">$subnet</span> --tags \
+    Key=kubernetes.io/cluster/togglemaster-cluster,Value=shared \
+    Key=kubernetes.io/role/elb,Value=1 \
+    Key=kubernetes.io/role/internal-elb,Value=1
+<span class="hljs-keyword">done</span>
+</code></pre>
+		<p><strong>Exemplo real executado:</strong></p>
+		<pre><code class="language-bash"><span class="hljs-comment"># Subnets do cluster togglemaster-cluster</span>
+<span class="hljs-keyword">for</span> subnet <span class="hljs-keyword">in</span> subnet-0cdd01015a2f551fe subnet-0d16cb4f2d00d5fce subnet-0fa44af5c556dd9c5 subnet-01a2363a89089e31e subnet-0c43fc638038eb98b; <span class="hljs-keyword">do</span>
+  aws ec2 create-tags --resources <span class="hljs-variable">$subnet</span> --tags \
+    Key=kubernetes.io/cluster/togglemaster-cluster,Value=shared \
+    Key=kubernetes.io/role/elb,Value=1 \
+    Key=kubernetes.io/role/internal-elb,Value=1
+<span class="hljs-keyword">done</span>
+</code></pre>
+		<p>Ana</p>
+		<!-- # 1️⃣ Obter o VPC ID do cluster
+$VPC_ID = aws eks describe-cluster --name togglemaster-cluster --query "cluster.resourcesVpcConfig.vpcId" --output text
+Write-Host "VPC ID: $VPC_ID"
+
+# 2️⃣ Obter todos os IDs de subnets do VPC e separar corretamente
+$Subnets = (aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" --query "Subnets[*].SubnetId" --output text) -split '\s+'
+Write-Host "Subnets encontradas:"
+$Subnets
+
+# 3️⃣ Adicionar as tags a cada subnet individualmente
+foreach ($subnet in $Subnets) {
+    Write-Host "Adicionando tags à subnet $subnet"
+    aws ec2 create-tags --resources $subnet --tags `
+        Key=kubernetes.io/cluster/togglemaster-cluster,Value=shared `
+        Key=kubernetes.io/role/elb,Value=1 `
+        Key=kubernetes.io/role/internal-elb,Value=1
+} -->
+		<h4 id="362-configurar-security-groups"
+			>3.6.2. Configurar Security Groups</h4
+		>
+		<p>Adicionar regras para permitir tráfego interno da VPC:</p>
+		<pre><code class="language-bash"><span class="hljs-comment"># Obter ID do Security Group do cluster</span>
+SG_ID=$(aws eks describe-cluster --name togglemaster-cluster --query <span class="hljs-string">&#x27;cluster.resourcesVpcConfig.clusterSecurityGroupId&#x27;</span> --output text)
+
+<span class="hljs-comment"># Obter CIDR da VPC</span>
+VPC_CIDR=$(aws ec2 describe-vpcs --vpc-ids $(aws eks describe-cluster --name togglemaster-cluster --query <span class="hljs-string">&#x27;cluster.resourcesVpcConfig.vpcId&#x27;</span> --output text) --query <span class="hljs-string">&#x27;Vpcs[0].CidrBlock&#x27;</span> --output text)
+
+<span class="hljs-comment"># Adicionar regra para permitir tráfego da VPC</span>
+aws ec2 authorize-security-group-ingress \
+  --group-id <span class="hljs-variable">$SG_ID</span> \
+  --protocol all \
+  --port -1 \
+  --cidr <span class="hljs-variable">$VPC_CIDR</span>
+</code></pre>
+		<p><strong>Valores reais do cluster:</strong></p>
+		<ul>
+			<li>VPC ID: <code>vpc-018e2024769475595</code></li>
+			<li>VPC CIDR: <code>172.31.0.0/16</code></li>
+			<li>Cluster SG: <code>sg-01896e6a89310d603</code></li>
+		</ul>
+		<p
+			>ana aws ec2 authorize-security-group-ingress
+			<code> --group-id sg-0dfef95a708f046b0</code> --protocol all
+			<code> --port -1</code> --cidr 172.31.0.0/16</p
+		>
+		<h3 id="37-instalar-metrics-server-depois-dos-nós-ativos"
+			>3.7. Instalar Metrics Server (DEPOIS dos nós ativos)</h3
+		>
+		<p
+			><strong>⚠️ NOTA:</strong> O Metrics Server deve ser instalado DEPOIS que
+			os nós estiverem ativos. Ele é necessário para o Horizontal Pod Autoscaler
+			(HPA).</p
+		>
+		<blockquote>
+			<p
+				><strong>Nota:</strong> O Metrics Server pode não aparecer na lista de
+				add-ons gerenciados da AWS. Nesse caso, instale via kubectl.</p
+			>
+		</blockquote>
+		<p><strong>Instalar via kubectl:</strong></p>
+		<pre><code class="language-bash"><span class="hljs-comment"># Metrics Server (necessário para HPA funcionar)</span>
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+<span class="hljs-comment"># Verificar se está rodando</span>
+kubectl get pods -n kube-system | grep metrics
+<span class="hljs-comment"># kubectl get pods -n kube-system | Select-String metrics</span>
+
+<span class="hljs-comment"># Testar métricas</span>
+kubectl top nodes
+kubectl top pods -n togglemaster
+</code></pre>
+		<h3 id="38-elasticache-serverless---requisito-de-tls"
+			>3.8. ElastiCache Serverless - Requisito de TLS</h3
+		>
+		<p
+			><strong>⚠️ IMPORTANTE:</strong> O ElastiCache Serverless Redis
+			<strong>REQUER conexão TLS</strong>. O evaluation-service deve ser
+			configurado para usar TLS.</p
+		>
+		<p><strong>Configuração no ConfigMap:</strong></p>
+		<pre><code class="language-yaml"><span class="hljs-comment"># Em k8s/configmap.yaml</span>
+<span class="hljs-attr">REDIS_HOST:</span> <span class="hljs-string">&quot;togglemaster-cache-nlxlok.serverless.use1.cache.amazonaws.com:6379&quot;</span>
+<span class="hljs-attr">REDIS_TLS:</span> <span class="hljs-string">&quot;true&quot;</span>
+</code></pre>
+		<p><strong>Testar conectividade Redis com TLS:</strong></p>
+		<pre><code class="language-bash"><span class="hljs-comment"># Testar conexão TLS ao Redis</span>
+kubectl run redis-tls-test --<span class="hljs-built_in">rm</span> -i --restart=Never --image=redis:alpine -n togglemaster -- \
+  redis-cli -h togglemaster-cache-nlxlok.serverless.use1.cache.amazonaws.com -p 6379 --tls --insecure PING
+<span class="hljs-comment"># Deve retornar: PONG</span>
+</code></pre>
+		<p><strong>Sem TLS, o erro será:</strong></p>
+		<pre><code>read tcp X.X.X.X:XXXXX-&gt;X.X.X.X:6379: i/o timeout
+</code></pre>
+		<h3 id="39-nginx-ingress-controller">3.9. Nginx Ingress Controller</h3>
+		<p
+			><strong>⚠️ IMPORTANTE:</strong> Em ambientes AWS Academy, os nós do
+			nodegroup podem ter problemas de conectividade com a API do Kubernetes.
+			Use EKS Auto nodes quando possível.</p
+		>
+		<p><strong>Opção 1: Usar o manifesto do projeto (recomendado)</strong></p>
+		<p
+			>O projeto já possui um manifesto completo do NGINX Ingress Controller em
+			<code>ingress/ingress-nginx.yaml</code>:</p
+		>
+		<pre><code class="language-bash"><span class="hljs-comment"># Aplicar o manifesto do projeto</span>
+kubectl apply -f ingress/ingress-nginx.yaml
+
+<span class="hljs-comment"># Verificar se está rodando</span>
+kubectl get pods -n ingress-nginx
+</code></pre>
+		<p
+			><strong
+				>Se o webhook de admissão falhar, crie o secret manualmente:</strong
+			></p
+		>
+		<p><strong>Cole no terminal:</strong></p>
+		<pre><code class="language-bash"><span class="hljs-comment"># Gerar certificados autoassinados</span>
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout /tmp/tls.key \
+  -out /tmp/tls.crt \
+  -subj <span class="hljs-string">&quot;//CN=ingress-nginx-controller-admission.ingress-nginx.svc&quot;</span> \
+  -addext <span class="hljs-string">&quot;subjectAltName=DNS:ingress-nginx-controller-admission.ingress-nginx.svc,DNS:ingress-nginx-controller-admission.ingress-nginx.svc.cluster.local&quot;</span>
+
+<span class="hljs-comment"># Criar secret</span>
+kubectl create secret generic ingress-nginx-admission \
+  --namespace=ingress-nginx \
+  --from-file=tls.crt=/tmp/tls.crt \
+  --from-file=tls.key=/tmp/tls.key \
+  --from-file=ca.crt=/tmp/tls.crt
+
+<span class="hljs-comment"># Reiniciar o controller</span>
+kubectl rollout restart deployment ingress-nginx-controller -n ingress-nginx
+</code></pre>
+		<p
+			><strong
+				>Configurar nodeSelector para EKS Auto nodes (se necessário):</strong
+			></p
+		>
+		<p
+			>Se os pods do NGINX Ingress não conseguirem se conectar à API do
+			Kubernetes, configure-os para rodar nos nós EKS Auto:</p
+		>
+		<pre><code class="language-bash">kubectl patch deployment ingress-nginx-controller -n ingress-nginx --<span class="hljs-built_in">type</span>=json -p=<span class="hljs-string">&#x27;[{&quot;op&quot;:&quot;add&quot;,&quot;path&quot;:&quot;/spec/template/spec/nodeSelector&quot;,&quot;value&quot;:{&quot;eks.amazonaws.com/compute-type&quot;:&quot;auto&quot;}}]&#x27;</span>
+</code></pre>
+		<p><strong>Opção 2: Usar o manifesto oficial</strong></p>
+		<pre><code class="language-bash"><span class="hljs-comment"># Aplicar diretamente do repositório oficial</span>
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/aws/deploy.yaml
+
+<span class="hljs-comment"># Verificar se está rodando</span>
+kubectl get pods -n ingress-nginx
+</code></pre>
+		<p><strong>Verificar LoadBalancer:</strong></p>
+		<pre><code class="language-bash"><span class="hljs-comment"># Verificar se o LoadBalancer foi criado</span>
+kubectl get svc -n ingress-nginx ingress-nginx-controller
+
+<span class="hljs-comment"># O EXTERNAL-IP deve mostrar algo como:</span>
+<span class="hljs-comment"># k8s-ingressn-ingressn-xxxx.elb.us-east-1.amazonaws.com</span>
+</code></pre>
+		<h3 id="310-criar-manifestos-kubernetes"
+			>3.10. Criar Manifestos Kubernetes</h3
+		>
+		<p
+			>Os manifestos Kubernetes já estão criados na pasta <code>k8s/</code> do
+			projeto com os valores reais da infraestrutura AWS.</p
+		>
+		<p><strong>Estrutura dos arquivos:</strong></p>
+		<pre><code>k8s/
+├── namespace.yaml        # Namespace togglemaster
+├── secrets.yaml          # Secrets com credenciais (Postgres, MasterKey)
+├── configmap.yaml        # Configurações e endpoints
+├── deployments.yaml      # Deployments e Services
+├── ingress.yaml          # Ingress para roteamento
+└── hpa.yaml             # Horizontal Pod Autoscaler
+
+ingress/
+└── ingress-nginx.yaml    # NGINX Ingress Controller completo
+
+docs/scripts/
+├── windows/
+│   └── update-aws-credentials.bat  # Atualizar credenciais AWS
+└── linux/
+    └── update-aws-credentials.sh   # Atualizar credenciais AWS
+</code></pre>
+		<p><strong>Valores já configurados:</strong></p>
+		<table>
+			<thead>
+				<tr>
+					<th>Recurso</th>
+					<th>Valor</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>ECR ID</td>
+					<td><code>886833754732</code></td>
+				</tr>
+				<tr>
+					<td>AUTH_DB_HOST</td>
+					<td
+						><code
+							>togglemaster-auth.c6h7fxfgdm94.us-east-1.rds.amazonaws.com</code
+						></td
+					>
+				</tr>
+				<tr>
+					<td>FLAG_DB_HOST</td>
+					<td
+						><code
+							>togglemaster-flags.c6h7fxfgdm94.us-east-1.rds.amazonaws.com</code
+						></td
+					>
+				</tr>
+				<tr>
+					<td>TARGETING_DB_HOST</td>
+					<td
+						><code
+							>togglemaster-targeting.c6h7fxfgdm94.us-east-1.rds.amazonaws.com</code
+						></td
+					>
+				</tr>
+				<tr>
+					<td>REDIS_HOST</td>
+					<td
+						><code
+							>togglemaster-cache-nlxlok.serverless.use1.cache.amazonaws.com:6379</code
+						></td
+					>
+				</tr>
+				<tr>
+					<td>SQS_URL</td>
+					<td
+						><code
+							>https://sqs.us-east-1.amazonaws.com/886833754732/togglemaster-analytics-queue</code
+						></td
+					>
+				</tr>
+			</tbody>
+		</table>
+		<p
+			><strong>⚠️ IMPORTANTE:</strong> Se precisar recriar os manifestos, use os
+			modelos abaixo. Substitua <code>&lt;SEU_ID_ECR&gt;</code> pelo seu ID da
+			AWS.</p
+		>
+		<p
+			><strong>⚠️ CRÍTICO - nodeSelector para EKS Auto:</strong> Em ambientes
+			AWS Academy, os nós do nodegroup podem ter problemas de DNS. Adicione
+			<code>nodeSelector</code> para usar apenas nós EKS Auto:</p
+		>
+		<pre><code class="language-yaml"><span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">template:</span>
+    <span class="hljs-attr">spec:</span>
+      <span class="hljs-attr">nodeSelector:</span>
+        <span class="hljs-attr">eks.amazonaws.com/compute-type:</span> <span class="hljs-string">auto</span>
+</code></pre>
+		<h4 id="1-namespaceyaml">1-namespace.yaml</h4>
+		<pre><code class="language-yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Namespace</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">togglemaster</span>
+  <span class="hljs-attr">labels:</span>
+    <span class="hljs-attr">name:</span> <span class="hljs-string">togglemaster</span>
+</code></pre>
+		<h4 id="2-secretsyaml">2-secrets.yaml</h4>
+		<p
+			><strong>⚠️ IMPORTANTE:</strong> Os secrets contêm credenciais sensíveis.
+			Gere seus próprios valores em base64:</p
+		>
+		<pre><code class="language-bash"><span class="hljs-comment"># Gerar valores em base64</span>
+<span class="hljs-built_in">echo</span> -n <span class="hljs-string">&quot;seu_usuario&quot;</span> | <span class="hljs-built_in">base64</span>
+<span class="hljs-built_in">echo</span> -n <span class="hljs-string">&quot;sua_senha&quot;</span> | <span class="hljs-built_in">base64</span>
+</code></pre>
+		<pre><code class="language-yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Secret</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">app-secrets</span>
+  <span class="hljs-attr">namespace:</span> <span class="hljs-string">togglemaster</span>
+<span class="hljs-attr">type:</span> <span class="hljs-string">Opaque</span>
+<span class="hljs-attr">data:</span>
+  <span class="hljs-comment"># Valores em base64</span>
+  <span class="hljs-comment"># Para gerar: echo -n &quot;valor&quot; | base64</span>
+  <span class="hljs-attr">POSTGRES_USER:</span> <span class="hljs-string">cG9zdGdyZXM=</span> <span class="hljs-comment"># &quot;postgres&quot; - substituir pelo valor real</span>
+  <span class="hljs-attr">POSTGRES_PASSWORD:</span> <span class="hljs-string">dG9nZ2xlbWFzdGVyITEyMzQ=</span> <span class="hljs-comment"># &quot;togglemaster!1234&quot; - substituir pelo valor real</span>
+  <span class="hljs-attr">MASTER_KEY:</span> <span class="hljs-string">YWRtaW4tc2VjcmV0by0xMjM=</span> <span class="hljs-comment"># &quot;admin-secreto-123&quot; - substituir pelo valor real</span>
+  <span class="hljs-comment"># NOTA: Credenciais AWS são armazenadas em secret separado (aws-credentials).</span>
+  <span class="hljs-comment"># Veja a seção &quot;Credenciais AWS para Serviços&quot; para configurar.</span>
+</code></pre>
+		<h4 id="3-configmapyaml">3-configmap.yaml</h4>
+		<p
+			><strong
+				>Valores de exemplo (substitua pelos seus endpoints reais):</strong
+			></p
+		>
+		<pre><code class="language-yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">ConfigMap</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+  <span class="hljs-attr">namespace:</span> <span class="hljs-string">togglemaster</span>
+<span class="hljs-attr">data:</span>
+  <span class="hljs-comment"># Database hosts (RDS)</span>
+  <span class="hljs-attr">AUTH_DB_HOST:</span> <span class="hljs-string">&quot;togglemaster-auth.c6h7fxfgdm94.us-east-1.rds.amazonaws.com&quot;</span>
+  <span class="hljs-attr">FLAG_DB_HOST:</span> <span class="hljs-string">&quot;togglemaster-flags.c6h7fxfgdm94.us-east-1.rds.amazonaws.com&quot;</span>
+  <span class="hljs-attr">TARGETING_DB_HOST:</span> <span class="hljs-string">&quot;togglemaster-targeting.c6h7fxfgdm94.us-east-1.rds.amazonaws.com&quot;</span>
+  <span class="hljs-attr">REDIS_HOST:</span> <span class="hljs-string">&quot;togglemaster-cache-nlxlok.serverless.use1.cache.amazonaws.com:6379&quot;</span>
+  <span class="hljs-comment"># URLs de servicos internos (comunicacao entre microservicos)</span>
+  <span class="hljs-attr">AUTH_SERVICE_URL:</span> <span class="hljs-string">&quot;http://auth-service:8001&quot;</span>
+  <span class="hljs-attr">FLAG_SERVICE_URL:</span> <span class="hljs-string">&quot;http://flag-service:8002&quot;</span>
+  <span class="hljs-attr">TARGETING_SERVICE_URL:</span> <span class="hljs-string">&quot;http://targeting-service:8003&quot;</span>
+  <span class="hljs-attr">EVALUATION_SERVICE_URL:</span> <span class="hljs-string">&quot;http://evaluation-service:8004&quot;</span>
+  <span class="hljs-attr">ANALYTICS_SERVICE_URL:</span> <span class="hljs-string">&quot;http://analytics-service:8005&quot;</span>
+  <span class="hljs-comment"># Configuracoes AWS</span>
+  <span class="hljs-attr">AWS_REGION:</span> <span class="hljs-string">&quot;us-east-1&quot;</span>
+  <span class="hljs-attr">AWS_SQS_URL:</span> <span class="hljs-string">&quot;https://sqs.us-east-1.amazonaws.com/886833754732/togglemaster-analytics-queue&quot;</span>
+  <span class="hljs-attr">AWS_DYNAMODB_TABLE:</span> <span class="hljs-string">&quot;ToggleMasterAnalytics&quot;</span>
+  <span class="hljs-comment"># Endpoints AWS (vazio para producao, preencher para LocalStack)</span>
+  <span class="hljs-attr">AWS_SQS_ENDPOINT_URL:</span> <span class="hljs-string">&quot;&quot;</span>
+  <span class="hljs-attr">AWS_DYNAMODB_ENDPOINT_URL:</span> <span class="hljs-string">&quot;&quot;</span>
+</code></pre>
+		<h4 id="4-deploymentsyaml">4-deployments.yaml</h4>
+		<p
+			><strong>⚠️ IMPORTANTE:</strong> Substitua <code>886833754732</code> pelo
+			seu ID da AWS.</p
+		>
+		<pre><code class="language-yaml"><span class="hljs-comment"># ==========================================</span>
+<span class="hljs-comment"># AUTH SERVICE</span>
+<span class="hljs-comment"># ==========================================</span>
+<span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">auth-service</span>
+  <span class="hljs-attr">namespace:</span> <span class="hljs-string">togglemaster</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">replicas:</span> <span class="hljs-number">1</span>
+  <span class="hljs-attr">selector:</span>
+    <span class="hljs-attr">matchLabels:</span>
+      <span class="hljs-attr">app:</span> <span class="hljs-string">auth-service</span>
+  <span class="hljs-attr">template:</span>
+    <span class="hljs-attr">metadata:</span>
+      <span class="hljs-attr">labels:</span>
+        <span class="hljs-attr">app:</span> <span class="hljs-string">auth-service</span>
+    <span class="hljs-attr">spec:</span>
+      <span class="hljs-attr">nodeSelector:</span>
+        <span class="hljs-attr">eks.amazonaws.com/compute-type:</span> <span class="hljs-string">auto</span>
+      <span class="hljs-attr">containers:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">auth-service</span>
+          <span class="hljs-attr">image:</span> <span class="hljs-number">886833754732.</span><span class="hljs-string">dkr.ecr.us-east-1.amazonaws.com/auth-service:latest</span>
+          <span class="hljs-attr">ports:</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">containerPort:</span> <span class="hljs-number">8001</span>
+          <span class="hljs-attr">env:</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">PORT</span>
+              <span class="hljs-attr">value:</span> <span class="hljs-string">&quot;8001&quot;</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">POSTGRES_USER</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">secretKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-secrets</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">POSTGRES_USER</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">POSTGRES_PASSWORD</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">secretKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-secrets</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">POSTGRES_PASSWORD</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">AUTH_DB_HOST</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">configMapKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">AUTH_DB_HOST</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">DATABASE_URL</span>
+              <span class="hljs-attr">value:</span> <span class="hljs-string">&quot;postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(AUTH_DB_HOST):5432/auth_db&quot;</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">MASTER_KEY</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">secretKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-secrets</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">MASTER_KEY</span>
+          <span class="hljs-attr">resources:</span>
+            <span class="hljs-attr">requests:</span>
+              <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;100m&quot;</span>
+              <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;128Mi&quot;</span>
+            <span class="hljs-attr">limits:</span>
+              <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;500m&quot;</span>
+              <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;512Mi&quot;</span>
+          <span class="hljs-attr">livenessProbe:</span>
+            <span class="hljs-attr">httpGet:</span>
+              <span class="hljs-attr">path:</span> <span class="hljs-string">/health</span>
+              <span class="hljs-attr">port:</span> <span class="hljs-number">8001</span>
+            <span class="hljs-attr">initialDelaySeconds:</span> <span class="hljs-number">30</span>
+            <span class="hljs-attr">periodSeconds:</span> <span class="hljs-number">10</span>
+          <span class="hljs-attr">readinessProbe:</span>
+            <span class="hljs-attr">httpGet:</span>
+              <span class="hljs-attr">path:</span> <span class="hljs-string">/health</span>
+              <span class="hljs-attr">port:</span> <span class="hljs-number">8001</span>
+            <span class="hljs-attr">initialDelaySeconds:</span> <span class="hljs-number">10</span>
+            <span class="hljs-attr">periodSeconds:</span> <span class="hljs-number">5</span>
+<span class="hljs-meta">---</span>
+<span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Service</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">auth-service</span>
+  <span class="hljs-attr">namespace:</span> <span class="hljs-string">togglemaster</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">selector:</span>
+    <span class="hljs-attr">app:</span> <span class="hljs-string">auth-service</span>
+  <span class="hljs-attr">ports:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">port:</span> <span class="hljs-number">8001</span>
+      <span class="hljs-attr">targetPort:</span> <span class="hljs-number">8001</span>
+  <span class="hljs-attr">type:</span> <span class="hljs-string">ClusterIP</span>
+
+<span class="hljs-meta">---</span>
+<span class="hljs-comment"># ==========================================</span>
+<span class="hljs-comment"># FLAG SERVICE</span>
+<span class="hljs-comment"># ==========================================</span>
+<span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">flag-service</span>
+  <span class="hljs-attr">namespace:</span> <span class="hljs-string">togglemaster</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">replicas:</span> <span class="hljs-number">1</span>
+  <span class="hljs-attr">selector:</span>
+    <span class="hljs-attr">matchLabels:</span>
+      <span class="hljs-attr">app:</span> <span class="hljs-string">flag-service</span>
+  <span class="hljs-attr">template:</span>
+    <span class="hljs-attr">metadata:</span>
+      <span class="hljs-attr">labels:</span>
+        <span class="hljs-attr">app:</span> <span class="hljs-string">flag-service</span>
+    <span class="hljs-attr">spec:</span>
+      <span class="hljs-attr">nodeSelector:</span>
+        <span class="hljs-attr">eks.amazonaws.com/compute-type:</span> <span class="hljs-string">auto</span>
+      <span class="hljs-attr">containers:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">flag-service</span>
+          <span class="hljs-attr">image:</span> <span class="hljs-number">886833754732.</span><span class="hljs-string">dkr.ecr.us-east-1.amazonaws.com/flag-service:latest</span>
+          <span class="hljs-attr">ports:</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">containerPort:</span> <span class="hljs-number">8002</span>
+          <span class="hljs-attr">env:</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">PORT</span>
+              <span class="hljs-attr">value:</span> <span class="hljs-string">&quot;8002&quot;</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">POSTGRES_USER</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">secretKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-secrets</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">POSTGRES_USER</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">POSTGRES_PASSWORD</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">secretKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-secrets</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">POSTGRES_PASSWORD</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">FLAG_DB_HOST</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">configMapKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">FLAG_DB_HOST</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">DATABASE_URL</span>
+              <span class="hljs-attr">value:</span> <span class="hljs-string">&quot;postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(FLAG_DB_HOST):5432/flags_db&quot;</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">AUTH_SERVICE_URL</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">configMapKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">AUTH_SERVICE_URL</span>
+          <span class="hljs-attr">resources:</span>
+            <span class="hljs-attr">requests:</span>
+              <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;100m&quot;</span>
+              <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;128Mi&quot;</span>
+            <span class="hljs-attr">limits:</span>
+              <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;500m&quot;</span>
+              <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;512Mi&quot;</span>
+          <span class="hljs-attr">livenessProbe:</span>
+            <span class="hljs-attr">httpGet:</span>
+              <span class="hljs-attr">path:</span> <span class="hljs-string">/health</span>
+              <span class="hljs-attr">port:</span> <span class="hljs-number">8002</span>
+            <span class="hljs-attr">initialDelaySeconds:</span> <span class="hljs-number">30</span>
+          <span class="hljs-attr">readinessProbe:</span>
+            <span class="hljs-attr">httpGet:</span>
+              <span class="hljs-attr">path:</span> <span class="hljs-string">/health</span>
+              <span class="hljs-attr">port:</span> <span class="hljs-number">8002</span>
+            <span class="hljs-attr">initialDelaySeconds:</span> <span class="hljs-number">10</span>
+<span class="hljs-meta">---</span>
+<span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Service</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">flag-service</span>
+  <span class="hljs-attr">namespace:</span> <span class="hljs-string">togglemaster</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">selector:</span>
+    <span class="hljs-attr">app:</span> <span class="hljs-string">flag-service</span>
+  <span class="hljs-attr">ports:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">port:</span> <span class="hljs-number">8002</span>
+      <span class="hljs-attr">targetPort:</span> <span class="hljs-number">8002</span>
+  <span class="hljs-attr">type:</span> <span class="hljs-string">ClusterIP</span>
+
+<span class="hljs-meta">---</span>
+<span class="hljs-comment"># ==========================================</span>
+<span class="hljs-comment"># TARGETING SERVICE</span>
+<span class="hljs-comment"># ==========================================</span>
+<span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">targeting-service</span>
+  <span class="hljs-attr">namespace:</span> <span class="hljs-string">togglemaster</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">replicas:</span> <span class="hljs-number">1</span>
+  <span class="hljs-attr">selector:</span>
+    <span class="hljs-attr">matchLabels:</span>
+      <span class="hljs-attr">app:</span> <span class="hljs-string">targeting-service</span>
+  <span class="hljs-attr">template:</span>
+    <span class="hljs-attr">metadata:</span>
+      <span class="hljs-attr">labels:</span>
+        <span class="hljs-attr">app:</span> <span class="hljs-string">targeting-service</span>
+    <span class="hljs-attr">spec:</span>
+      <span class="hljs-attr">nodeSelector:</span>
+        <span class="hljs-attr">eks.amazonaws.com/compute-type:</span> <span class="hljs-string">auto</span>
+      <span class="hljs-attr">containers:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">targeting-service</span>
+          <span class="hljs-attr">image:</span> <span class="hljs-number">886833754732.</span><span class="hljs-string">dkr.ecr.us-east-1.amazonaws.com/targeting-service:latest</span>
+          <span class="hljs-attr">ports:</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">containerPort:</span> <span class="hljs-number">8003</span>
+          <span class="hljs-attr">env:</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">PORT</span>
+              <span class="hljs-attr">value:</span> <span class="hljs-string">&quot;8003&quot;</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">POSTGRES_USER</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">secretKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-secrets</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">POSTGRES_USER</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">POSTGRES_PASSWORD</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">secretKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-secrets</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">POSTGRES_PASSWORD</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">TARGETING_DB_HOST</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">configMapKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">TARGETING_DB_HOST</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">DATABASE_URL</span>
+              <span class="hljs-attr">value:</span> <span class="hljs-string">&quot;postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(TARGETING_DB_HOST):5432/targeting_db&quot;</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">AUTH_SERVICE_URL</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">configMapKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">AUTH_SERVICE_URL</span>
+          <span class="hljs-attr">resources:</span>
+            <span class="hljs-attr">requests:</span>
+              <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;100m&quot;</span>
+              <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;128Mi&quot;</span>
+            <span class="hljs-attr">limits:</span>
+              <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;500m&quot;</span>
+              <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;512Mi&quot;</span>
+          <span class="hljs-attr">livenessProbe:</span>
+            <span class="hljs-attr">httpGet:</span>
+              <span class="hljs-attr">path:</span> <span class="hljs-string">/health</span>
+              <span class="hljs-attr">port:</span> <span class="hljs-number">8003</span>
+            <span class="hljs-attr">initialDelaySeconds:</span> <span class="hljs-number">30</span>
+          <span class="hljs-attr">readinessProbe:</span>
+            <span class="hljs-attr">httpGet:</span>
+              <span class="hljs-attr">path:</span> <span class="hljs-string">/health</span>
+              <span class="hljs-attr">port:</span> <span class="hljs-number">8003</span>
+            <span class="hljs-attr">initialDelaySeconds:</span> <span class="hljs-number">10</span>
+<span class="hljs-meta">---</span>
+<span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Service</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">targeting-service</span>
+  <span class="hljs-attr">namespace:</span> <span class="hljs-string">togglemaster</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">selector:</span>
+    <span class="hljs-attr">app:</span> <span class="hljs-string">targeting-service</span>
+  <span class="hljs-attr">ports:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">port:</span> <span class="hljs-number">8003</span>
+      <span class="hljs-attr">targetPort:</span> <span class="hljs-number">8003</span>
+  <span class="hljs-attr">type:</span> <span class="hljs-string">ClusterIP</span>
+
+<span class="hljs-meta">---</span>
+<span class="hljs-comment"># ==========================================</span>
+<span class="hljs-comment"># EVALUATION SERVICE (HPA habilitado)</span>
+<span class="hljs-comment"># ==========================================</span>
+<span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">evaluation-service</span>
+  <span class="hljs-attr">namespace:</span> <span class="hljs-string">togglemaster</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">replicas:</span> <span class="hljs-number">1</span>
+  <span class="hljs-attr">selector:</span>
+    <span class="hljs-attr">matchLabels:</span>
+      <span class="hljs-attr">app:</span> <span class="hljs-string">evaluation-service</span>
+  <span class="hljs-attr">template:</span>
+    <span class="hljs-attr">metadata:</span>
+      <span class="hljs-attr">labels:</span>
+        <span class="hljs-attr">app:</span> <span class="hljs-string">evaluation-service</span>
+    <span class="hljs-attr">spec:</span>
+      <span class="hljs-attr">nodeSelector:</span>
+        <span class="hljs-attr">eks.amazonaws.com/compute-type:</span> <span class="hljs-string">auto</span>
+      <span class="hljs-attr">containers:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">evaluation-service</span>
+          <span class="hljs-attr">image:</span> <span class="hljs-number">886833754732.</span><span class="hljs-string">dkr.ecr.us-east-1.amazonaws.com/evaluation-service:latest</span>
+          <span class="hljs-attr">ports:</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">containerPort:</span> <span class="hljs-number">8004</span>
+          <span class="hljs-attr">env:</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">PORT</span>
+              <span class="hljs-attr">value:</span> <span class="hljs-string">&quot;8004&quot;</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">REDIS_HOST</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">configMapKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">REDIS_HOST</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">REDIS_URL</span>
+              <span class="hljs-attr">value:</span> <span class="hljs-string">&quot;redis://$(REDIS_HOST)&quot;</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">FLAG_SERVICE_URL</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">configMapKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">FLAG_SERVICE_URL</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">TARGETING_SERVICE_URL</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">configMapKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">TARGETING_SERVICE_URL</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">AWS_SQS_URL</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">configMapKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">AWS_SQS_URL</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">AWS_REGION</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">configMapKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">AWS_REGION</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">AUTH_SERVICE_URL</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">configMapKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">AUTH_SERVICE_URL</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">MASTER_KEY</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">secretKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-secrets</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">MASTER_KEY</span>
+          <span class="hljs-attr">resources:</span>
+            <span class="hljs-attr">requests:</span>
+              <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;100m&quot;</span>
+              <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;128Mi&quot;</span>
+            <span class="hljs-attr">limits:</span>
+              <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;500m&quot;</span>
+              <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;512Mi&quot;</span>
+          <span class="hljs-attr">livenessProbe:</span>
+            <span class="hljs-attr">httpGet:</span>
+              <span class="hljs-attr">path:</span> <span class="hljs-string">/health</span>
+              <span class="hljs-attr">port:</span> <span class="hljs-number">8004</span>
+            <span class="hljs-attr">initialDelaySeconds:</span> <span class="hljs-number">30</span>
+          <span class="hljs-attr">readinessProbe:</span>
+            <span class="hljs-attr">httpGet:</span>
+              <span class="hljs-attr">path:</span> <span class="hljs-string">/health</span>
+              <span class="hljs-attr">port:</span> <span class="hljs-number">8004</span>
+            <span class="hljs-attr">initialDelaySeconds:</span> <span class="hljs-number">10</span>
+<span class="hljs-meta">---</span>
+<span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Service</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">evaluation-service</span>
+  <span class="hljs-attr">namespace:</span> <span class="hljs-string">togglemaster</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">selector:</span>
+    <span class="hljs-attr">app:</span> <span class="hljs-string">evaluation-service</span>
+  <span class="hljs-attr">ports:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">port:</span> <span class="hljs-number">8004</span>
+      <span class="hljs-attr">targetPort:</span> <span class="hljs-number">8004</span>
+  <span class="hljs-attr">type:</span> <span class="hljs-string">ClusterIP</span>
+
+<span class="hljs-meta">---</span>
+<span class="hljs-comment"># ==========================================</span>
+<span class="hljs-comment"># ANALYTICS SERVICE</span>
+<span class="hljs-comment"># ==========================================</span>
+<span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">analytics-service</span>
+  <span class="hljs-attr">namespace:</span> <span class="hljs-string">togglemaster</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">replicas:</span> <span class="hljs-number">1</span>
+  <span class="hljs-attr">selector:</span>
+    <span class="hljs-attr">matchLabels:</span>
+      <span class="hljs-attr">app:</span> <span class="hljs-string">analytics-service</span>
+  <span class="hljs-attr">template:</span>
+    <span class="hljs-attr">metadata:</span>
+      <span class="hljs-attr">labels:</span>
+        <span class="hljs-attr">app:</span> <span class="hljs-string">analytics-service</span>
+    <span class="hljs-attr">spec:</span>
+      <span class="hljs-attr">nodeSelector:</span>
+        <span class="hljs-attr">eks.amazonaws.com/compute-type:</span> <span class="hljs-string">auto</span>
+      <span class="hljs-attr">containers:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">analytics-service</span>
+          <span class="hljs-attr">image:</span> <span class="hljs-number">886833754732.</span><span class="hljs-string">dkr.ecr.us-east-1.amazonaws.com/analytics-service:latest</span>
+          <span class="hljs-attr">ports:</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">containerPort:</span> <span class="hljs-number">8005</span>
+          <span class="hljs-attr">env:</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">PORT</span>
+              <span class="hljs-attr">value:</span> <span class="hljs-string">&quot;8005&quot;</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">AWS_REGION</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">configMapKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">AWS_REGION</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">AWS_SQS_URL</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">configMapKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">AWS_SQS_URL</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">AWS_DYNAMODB_TABLE</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">configMapKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">AWS_DYNAMODB_TABLE</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">AWS_SQS_ENDPOINT_URL</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">configMapKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">AWS_SQS_ENDPOINT_URL</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">AWS_DYNAMODB_ENDPOINT_URL</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">configMapKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">AWS_DYNAMODB_ENDPOINT_URL</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">AWS_ACCESS_KEY_ID</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">secretKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-secrets</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">AWS_ACCESS_KEY_ID</span>
+            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">AWS_SECRET_ACCESS_KEY</span>
+              <span class="hljs-attr">valueFrom:</span>
+                <span class="hljs-attr">secretKeyRef:</span>
+                  <span class="hljs-attr">name:</span> <span class="hljs-string">app-secrets</span>
+                  <span class="hljs-attr">key:</span> <span class="hljs-string">AWS_SECRET_ACCESS_KEY</span>
+          <span class="hljs-attr">resources:</span>
+            <span class="hljs-attr">requests:</span>
+              <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;100m&quot;</span>
+              <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;128Mi&quot;</span>
+            <span class="hljs-attr">limits:</span>
+              <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;500m&quot;</span>
+              <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;512Mi&quot;</span>
+          <span class="hljs-attr">livenessProbe:</span>
+            <span class="hljs-attr">httpGet:</span>
+              <span class="hljs-attr">path:</span> <span class="hljs-string">/health</span>
+              <span class="hljs-attr">port:</span> <span class="hljs-number">8005</span>
+            <span class="hljs-attr">initialDelaySeconds:</span> <span class="hljs-number">30</span>
+          <span class="hljs-attr">readinessProbe:</span>
+            <span class="hljs-attr">httpGet:</span>
+              <span class="hljs-attr">path:</span> <span class="hljs-string">/health</span>
+              <span class="hljs-attr">port:</span> <span class="hljs-number">8005</span>
+            <span class="hljs-attr">initialDelaySeconds:</span> <span class="hljs-number">10</span>
+<span class="hljs-meta">---</span>
+<span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Service</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">analytics-service</span>
+  <span class="hljs-attr">namespace:</span> <span class="hljs-string">togglemaster</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">selector:</span>
+    <span class="hljs-attr">app:</span> <span class="hljs-string">analytics-service</span>
+  <span class="hljs-attr">ports:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">port:</span> <span class="hljs-number">8005</span>
+      <span class="hljs-attr">targetPort:</span> <span class="hljs-number">8005</span>
+  <span class="hljs-attr">type:</span> <span class="hljs-string">ClusterIP</span>
+</code></pre>
+		<h4 id="5-ingressyaml">5-ingress.yaml</h4>
+		<pre><code class="language-yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">networking.k8s.io/v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Ingress</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">togglemaster-ingress</span>
+  <span class="hljs-attr">namespace:</span> <span class="hljs-string">togglemaster</span>
+  <span class="hljs-attr">annotations:</span>
+    <span class="hljs-attr">nginx.ingress.kubernetes.io/rewrite-target:</span> <span class="hljs-string">/$2</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">ingressClassName:</span> <span class="hljs-string">nginx</span>
+  <span class="hljs-attr">rules:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">http:</span>
+        <span class="hljs-attr">paths:</span>
+          <span class="hljs-comment"># Auth Service</span>
+          <span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span> <span class="hljs-string">/auth(/|$)(.*)</span>
+            <span class="hljs-attr">pathType:</span> <span class="hljs-string">Prefix</span>
+            <span class="hljs-attr">backend:</span>
+              <span class="hljs-attr">service:</span>
+                <span class="hljs-attr">name:</span> <span class="hljs-string">auth-service</span>
+                <span class="hljs-attr">port:</span>
+                  <span class="hljs-attr">number:</span> <span class="hljs-number">8001</span>
+          <span class="hljs-comment"># Flag Service</span>
+          <span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span> <span class="hljs-string">/flags(/|$)(.*)</span>
+            <span class="hljs-attr">pathType:</span> <span class="hljs-string">Prefix</span>
+            <span class="hljs-attr">backend:</span>
+              <span class="hljs-attr">service:</span>
+                <span class="hljs-attr">name:</span> <span class="hljs-string">flag-service</span>
+                <span class="hljs-attr">port:</span>
+                  <span class="hljs-attr">number:</span> <span class="hljs-number">8002</span>
+          <span class="hljs-comment"># Targeting Service</span>
+          <span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span> <span class="hljs-string">/targeting(/|$)(.*)</span>
+            <span class="hljs-attr">pathType:</span> <span class="hljs-string">Prefix</span>
+            <span class="hljs-attr">backend:</span>
+              <span class="hljs-attr">service:</span>
+                <span class="hljs-attr">name:</span> <span class="hljs-string">targeting-service</span>
+                <span class="hljs-attr">port:</span>
+                  <span class="hljs-attr">number:</span> <span class="hljs-number">8003</span>
+          <span class="hljs-comment"># Evaluation Service</span>
+          <span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span> <span class="hljs-string">/evaluate(/|$)(.*)</span>
+            <span class="hljs-attr">pathType:</span> <span class="hljs-string">Prefix</span>
+            <span class="hljs-attr">backend:</span>
+              <span class="hljs-attr">service:</span>
+                <span class="hljs-attr">name:</span> <span class="hljs-string">evaluation-service</span>
+                <span class="hljs-attr">port:</span>
+                  <span class="hljs-attr">number:</span> <span class="hljs-number">8004</span>
+          <span class="hljs-comment"># Analytics Service</span>
+          <span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span> <span class="hljs-string">/analytics(/|$)(.*)</span>
+            <span class="hljs-attr">pathType:</span> <span class="hljs-string">Prefix</span>
+            <span class="hljs-attr">backend:</span>
+              <span class="hljs-attr">service:</span>
+                <span class="hljs-attr">name:</span> <span class="hljs-string">analytics-service</span>
+                <span class="hljs-attr">port:</span>
+                  <span class="hljs-attr">number:</span> <span class="hljs-number">8005</span>
+</code></pre>
+		<h4 id="6-hpayaml">6-hpa.yaml</h4>
+		<pre><code class="language-yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">autoscaling/v2</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">HorizontalPodAutoscaler</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">evaluation-hpa</span>
+  <span class="hljs-attr">namespace:</span> <span class="hljs-string">togglemaster</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">scaleTargetRef:</span>
+    <span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span>
+    <span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span>
+    <span class="hljs-attr">name:</span> <span class="hljs-string">evaluation-service</span>
+  <span class="hljs-attr">minReplicas:</span> <span class="hljs-number">1</span>
+  <span class="hljs-attr">maxReplicas:</span> <span class="hljs-number">5</span>
+  <span class="hljs-attr">metrics:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">type:</span> <span class="hljs-string">Resource</span>
+      <span class="hljs-attr">resource:</span>
+        <span class="hljs-attr">name:</span> <span class="hljs-string">cpu</span>
+        <span class="hljs-attr">target:</span>
+          <span class="hljs-attr">type:</span> <span class="hljs-string">Utilization</span>
+          <span class="hljs-attr">averageUtilization:</span> <span class="hljs-number">70</span>
+  <span class="hljs-attr">behavior:</span>
+    <span class="hljs-attr">scaleDown:</span>
+      <span class="hljs-attr">stabilizationWindowSeconds:</span> <span class="hljs-number">60</span>
+      <span class="hljs-attr">policies:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-attr">type:</span> <span class="hljs-string">Percent</span>
+          <span class="hljs-attr">value:</span> <span class="hljs-number">50</span>
+          <span class="hljs-attr">periodSeconds:</span> <span class="hljs-number">60</span>
+    <span class="hljs-attr">scaleUp:</span>
+      <span class="hljs-attr">stabilizationWindowSeconds:</span> <span class="hljs-number">0</span>
+      <span class="hljs-attr">policies:</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-attr">type:</span> <span class="hljs-string">Percent</span>
+          <span class="hljs-attr">value:</span> <span class="hljs-number">100</span>
+          <span class="hljs-attr">periodSeconds:</span> <span class="hljs-number">30</span>
+        <span class="hljs-bullet">-</span> <span class="hljs-attr">type:</span> <span class="hljs-string">Pods</span>
+          <span class="hljs-attr">value:</span> <span class="hljs-number">2</span>
+          <span class="hljs-attr">periodSeconds:</span> <span class="hljs-number">30</span>
+      <span class="hljs-attr">selectPolicy:</span> <span class="hljs-string">Max</span>
+</code></pre>
+		<h3 id="311-aplicar-os-manifestos">3.11. Aplicar os Manifestos</h3>
+		<p><strong>⚠️ IMPORTANTE:</strong> Aplique nesta ordem!</p>
+		<pre><code class="language-bash"><span class="hljs-comment"># 0. PRÉ-REQUISITO: Configurar VPC (Seção 3.5)</span>
+<span class="hljs-comment"># Adicionar tags às subnets e regras de Security Group</span>
+
+<span class="hljs-comment"># 1. Criar namespace</span>
+kubectl apply -f k8s/namespace.yaml
+
+<span class="hljs-comment"># 2. Criar secrets</span>
+kubectl apply -f k8s/secrets.yaml
+
+<span class="hljs-comment"># 3. Criar configmap</span>
+kubectl apply -f k8s/configmap.yaml
+
+<span class="hljs-comment"># 4. Criar deployments e services</span>
+kubectl apply -f k8s/deployments.yaml
+
+<span class="hljs-comment"># 5. Criar ingress (pode falhar se webhook não estiver pronto)</span>
+kubectl apply -f k8s/ingress.yaml
+
+<span class="hljs-comment"># Se falhar com erro de webhook, delete o webhook e tente novamente:</span>
+<span class="hljs-comment"># kubectl delete validatingwebhookconfiguration ingress-nginx-admission</span>
+<span class="hljs-comment"># kubectl apply -f k8s/ingress.yaml</span>
+
+<span class="hljs-comment"># 6. Criar HPA</span>
+kubectl apply -f k8s/hpa.yaml
+</code></pre>
+		<h3 id="313-verificar-status">3.13. Verificar Status</h3>
+		<pre><code class="language-bash"><span class="hljs-comment"># Ver pods (todos devem estar Running)</span>
+kubectl get pods -n togglemaster
+
+<span class="hljs-comment"># Ver services</span>
+kubectl get services -n togglemaster
+
+<span class="hljs-comment"># Ver ingress (anote o ADDRESS)</span>
+kubectl get ingress -n togglemaster
+
+<span class="hljs-comment"># Ver HPA</span>
+kubectl get hpa -n togglemaster
+
+<span class="hljs-comment"># Ver todos os recursos</span>
+kubectl get all -n togglemaster
+</code></pre>
+		<h3 id="314-obter-url-de-acesso">3.14. Obter URL de Acesso</h3>
+		<pre><code class="language-bash"><span class="hljs-comment"># Obter endereço do ingress</span>
+kubectl get ingress togglemaster-ingress -n togglemaster
+
+<span class="hljs-comment"># A URL será algo como:</span>
+<span class="hljs-comment"># http://&lt;ADDRESS_DO_INGRESS&gt;</span>
+</code></pre>
+		<hr />
+		<h2 id="etapa-4-testes-e-validação-1">ETAPA 4: Testes e Validação</h2>
+		<h3 id="41-health-check">4.1. Health Check</h3>
+		<pre><code class="language-bash"><span class="hljs-comment"># Obter URL do ingress</span>
+INGRESS_URL=$(kubectl get ingress togglemaster-ingress -n togglemaster -o jsonpath=<span class="hljs-string">&#x27;{.status.loadBalancer.ingress[0].hostname}&#x27;</span>)
+
+<span class="hljs-comment"># Testar cada serviço</span>
+curl http://<span class="hljs-variable">$INGRESS_URL</span>/auth/health
+curl http://<span class="hljs-variable">$INGRESS_URL</span>/flags/health
+curl http://<span class="hljs-variable">$INGRESS_URL</span>/targeting/health
+curl http://<span class="hljs-variable">$INGRESS_URL</span>/evaluate/health
+curl http://<span class="hljs-variable">$INGRESS_URL</span>/analytics/health
+</code></pre>
+		<h3 id="42-teste-de-integração">4.2. Teste de Integração</h3>
+		<pre><code class="language-bash"><span class="hljs-comment"># 1. Criar usuário</span>
+curl -X POST http://<span class="hljs-variable">$INGRESS_URL</span>/auth/register \
+  -H <span class="hljs-string">&quot;Content-Type: application/json&quot;</span> \
+  -d <span class="hljs-string">&#x27;{&quot;email&quot;:&quot;teste@example.com&quot;,&quot;password&quot;:&quot;123456&quot;}&#x27;</span>
+
+<span class="hljs-comment"># 2. Fazer login</span>
+TOKEN=$(curl -X POST http://<span class="hljs-variable">$INGRESS_URL</span>/auth/login \
+  -H <span class="hljs-string">&quot;Content-Type: application/json&quot;</span> \
+  -d <span class="hljs-string">&#x27;{&quot;email&quot;:&quot;teste@example.com&quot;,&quot;password&quot;:&quot;123456&quot;}&#x27;</span> \
+  | jq -r <span class="hljs-string">&#x27;.token&#x27;</span>)
+
+<span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Token: <span class="hljs-variable">$TOKEN</span>&quot;</span>
+
+<span class="hljs-comment"># 3. Criar feature flag</span>
+curl -X POST http://<span class="hljs-variable">$INGRESS_URL</span>/flags \
+  -H <span class="hljs-string">&quot;Content-Type: application/json&quot;</span> \
+  -d <span class="hljs-string">&#x27;{&quot;name&quot;:&quot;nova_feature&quot;,&quot;description&quot;:&quot;Teste de nova feature&quot;,&quot;enabled&quot;:true}&#x27;</span>
+
+<span class="hljs-comment"># 4. Listar flags</span>
+curl http://<span class="hljs-variable">$INGRESS_URL</span>/flags
+
+<span class="hljs-comment"># 5. Avaliar flag</span>
+curl -X POST http://<span class="hljs-variable">$INGRESS_URL</span>/evaluate \
+  -H <span class="hljs-string">&quot;Content-Type: application/json&quot;</span> \
+  -d <span class="hljs-string">&#x27;{&quot;flagName&quot;:&quot;nova_feature&quot;,&quot;userId&quot;:&quot;user123&quot;}&#x27;</span>
+
+<span class="hljs-comment"># 6. Coletar analytics</span>
+curl -X POST http://<span class="hljs-variable">$INGRESS_URL</span>/analytics \
+  -H <span class="hljs-string">&quot;Content-Type: application/json&quot;</span> \
+  -d <span class="hljs-string">&#x27;{&quot;flagName&quot;:&quot;nova_feature&quot;,&quot;userId&quot;:&quot;user123&quot;,&quot;enabled&quot;:true}&#x27;</span>
+
+<span class="hljs-comment"># 7. Ver estatísticas</span>
+curl http://<span class="hljs-variable">$INGRESS_URL</span>/analytics/stats
+</code></pre>
+		<h3 id="43-teste-de-escalabilidade-hpa"
+			>4.3. Teste de Escalabilidade (HPA)</h3
+		>
+		<pre><code class="language-bash"><span class="hljs-comment"># Instalar hey (load generator)</span>
+<span class="hljs-comment"># Windows: choco install hey</span>
+<span class="hljs-comment"># Mac: brew install hey</span>
+<span class="hljs-comment"># Linux: go install github.com/rakyll/hey@latest</span>
+
+<span class="hljs-comment"># Terminal 1: Monitorar HPA</span>
+kubectl get hpa -n togglemaster -w
+
+<span class="hljs-comment"># Terminal 2: Monitorar pods</span>
+kubectl get pods -n togglemaster -w
+
+<span class="hljs-comment"># Terminal 3: Gerar carga</span>
+INGRESS_URL=$(kubectl get ingress togglemaster-ingress -n togglemaster -o jsonpath=<span class="hljs-string">&#x27;{.status.loadBalancer.ingress[0].hostname}&#x27;</span>)
+hey -z 5m -c 50 http://<span class="hljs-variable">$INGRESS_URL</span>/evaluate
+
+<span class="hljs-comment"># Observe:</span>
+<span class="hljs-comment"># - O HPA detectar o aumento de CPU</span>
+<span class="hljs-comment"># - O número de replicas aumentar</span>
+<span class="hljs-comment"># - Após o teste, as replicas diminuem gradualmente</span>
+</code></pre>
+		<hr />
+		<h2 id="etapa-5-vídeo-de-apresentação">ETAPA 5: Vídeo de Apresentação</h2>
+		<h3 id="roteiro-sugerido-8-12-minutos">Roteiro Sugerido (8-12 minutos)</h3>
+		<h4 id="1-introdução-1-minuto">1. Introdução (1 minuto)</h4>
+		<ul>
+			<li>Apresentação pessoal</li>
+			<li>Nome do projeto: <strong>ToggleMaster</strong></li>
+			<li>Propósito: Sistema de Feature Flags</li>
+		</ul>
+		<h4 id="2-arquitetura-1-minuto">2. Arquitetura (1 minuto)</h4>
+		<ul>
+			<li>5 microsserviços</li>
+			<li>Stack tecnológica (Go, Python, PostgreSQL, Redis, DynamoDB, SQS)</li>
+			<li>Kubernetes + AWS</li>
+		</ul>
+		<h4 id="3-ambiente-local-com-docker-compose-3-minutos"
+			>3. Ambiente Local com Docker Compose (3 minutos)</h4
+		>
+		<p
+			><strong>⚠️ IMPORTANTE:</strong> Demonstre primeiro o ambiente local
+			funcionando com Docker Compose.</p
+		>
+		<p><strong>Terminal - Subir ambiente local:</strong></p>
+		<pre><code class="language-bash"><span class="hljs-comment"># Navegue para a raiz do projeto</span>
+<span class="hljs-built_in">cd</span> tech-challenger/fase-2
+
+<span class="hljs-comment"># Suba todos os serviços com Docker Compose</span>
+docker-compose up -d
+
+<span class="hljs-comment"># Verifique se todos os containers estão rodando</span>
+docker-compose ps
+
+<span class="hljs-comment"># Veja os logs</span>
+docker-compose logs -f
+</code></pre>
+		<p><strong>Console Docker Desktop:</strong></p>
+		<ul>
+			<li>Mostre os containers rodando</li>
+			<li>Verifique se todos os serviços estão &quot;healthy&quot;</li>
+		</ul>
+		<p><strong>Teste rápido:</strong></p>
+		<pre><code class="language-bash"><span class="hljs-comment"># Verificar saúde dos serviços</span>
+curl http://localhost:8001/health  <span class="hljs-comment"># auth-service</span>
+curl http://localhost:8002/health  <span class="hljs-comment"># flag-service</span>
+curl http://localhost:8003/health  <span class="hljs-comment"># targeting-service</span>
+curl http://localhost:8004/health  <span class="hljs-comment"># evaluation-service</span>
+curl http://localhost:8005/health  <span class="hljs-comment"># analytics-service</span>
+</code></pre>
+		<h4 id="4-demonstração-com-postman-3-minutos"
+			>4. Demonstração com Postman (3 minutos)</h4
+		>
+		<p
+			><strong>⚠️ IMPORTANTE:</strong> Use o Postman para demonstrar o fluxo
+			completo de feature flags.</p
+		>
+		<p
+			><strong
+				>Coleção Postman - Crie uma coleção com as seguintes
+				requisições:</strong
+			></p
+		>
+		<ol>
+			<li>
+				<p><strong>Health Checks</strong> (pasta)</p>
+				<ul>
+					<li>GET <code>http://localhost:8001/health</code> - Auth Service</li>
+					<li>GET <code>http://localhost:8002/health</code> - Flag Service</li>
+					<li
+						>GET <code>http://localhost:8003/health</code> - Targeting
+						Service</li
+					>
+					<li
+						>GET <code>http://localhost:8004/health</code> - Evaluation
+						Service</li
+					>
+					<li
+						>GET <code>http://localhost:8005/health</code> - Analytics
+						Service</li
+					>
+				</ul>
+			</li>
+			<li>
+				<p><strong>API Key</strong> (pasta)</p>
+				<ul>
+					<li
+						>POST <code>http://localhost:8001/admin/keys</code> - Gerar API Key
+						<ul>
+							<li
+								>Header:
+								<code>Authorization: Bearer &lt;MASTER_KEY&gt;</code></li
+							>
+							<li
+								>Body: <code>{&quot;name&quot;: &quot;demo-key&quot;}</code></li
+							>
+						</ul>
+					</li>
+				</ul>
+			</li>
+			<li>
+				<p><strong>Feature Flags</strong> (pasta)</p>
+				<ul>
+					<li
+						>POST <code>http://localhost:8002/flags</code> - Criar Flag
+						<ul>
+							<li
+								>Header: <code>Authorization: Bearer &lt;API_KEY&gt;</code></li
+							>
+							<li
+								>Body:
+								<code
+									>{&quot;name&quot;: &quot;dark-mode&quot;,
+									&quot;is_enabled&quot;: true}</code
+								></li
+							>
+						</ul>
+					</li>
+					<li>GET <code>http://localhost:8002/flags</code> - Listar Flags</li>
+					<li
+						>GET <code>http://localhost:8002/flags/dark-mode</code> - Obter
+						Flag</li
+					>
+				</ul>
+			</li>
+			<li>
+				<p><strong>Targeting Rules</strong> (pasta)</p>
+				<ul>
+					<li
+						>POST <code>http://localhost:8003/rules</code> - Criar Regra
+						<ul>
+							<li
+								>Header: <code>Authorization: Bearer &lt;API_KEY&gt;</code></li
+							>
+							<li
+								>Body:<pre><code class="language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;flag_name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;dark-mode&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;is_enabled&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-keyword">true</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;rules&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span><span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;PERCENTAGE&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;value&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">50</span><span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</li>
+			<li>
+				<p><strong>Evaluation</strong> (pasta)</p>
+				<ul>
+					<li
+						>GET
+						<code
+							>http://localhost:8004/evaluate?user_id=user123&amp;flag_name=dark-mode</code
+						>
+						- Avaliar Flag
+						<ul>
+							<li>Mostre o resultado true/false baseado na regra de 50%</li>
+						</ul>
+					</li>
+				</ul>
+			</li>
+		</ol>
+		<p><strong>Demonstração:</strong></p>
+		<ol>
+			<li>Execute o health check de todos os serviços</li>
+			<li>Gere uma API Key</li>
+			<li>Crie uma feature flag &quot;dark-mode&quot;</li>
+			<li>Crie uma regra de 50% para a flag</li>
+			<li>Avalie a flag para diferentes usuários</li>
+			<li
+				>Mostre que o resultado varia (alguns usuários recebem true, outros
+				false)</li
+			>
+		</ol>
+		<h4 id="5-ambiente-cloud-3-minutos">5. Ambiente Cloud (3 minutos)</h4>
+		<p><strong>Console AWS - Mostre:</strong></p>
+		<ul>
+			<li>Cluster EKS ativo</li>
+			<li>Nodes rodando</li>
+			<li>RDS (3 instâncias PostgreSQL)</li>
+			<li>ElastiCache Redis</li>
+			<li>DynamoDB com tabela criada</li>
+			<li>SQS com fila criada</li>
+		</ul>
+		<p><strong>Terminal - Comandos:</strong></p>
+		<pre><code class="language-bash">kubectl get nodes
+kubectl get pods -n togglemaster
+kubectl get hpa -n togglemaster
+kubectl get ingress -n togglemaster
+</code></pre>
+		<h4 id="6-teste-de-escalabilidade-2-minutos"
+			>6. Teste de Escalabilidade (2 minutos)</h4
+		>
+		<pre><code class="language-bash"><span class="hljs-comment"># Terminal 1: Monitoramento</span>
+kubectl get pods -n togglemaster -w
+
+<span class="hljs-comment"># Terminal 2: Teste de carga</span>
+hey -z 3m -c 30 http://&lt;INGRESS_URL&gt;/evaluate
+</code></pre>
+		<ul>
+			<li>Explique o HPA</li>
+			<li>Mostre replicas aumentando</li>
+		</ul>
+		<h4 id="7-conclusão-1-minuto">7. Conclusão (1 minuto)</h4>
+		<ul>
+			<li>Tecnologias utilizadas</li>
+			<li
+				>Desafios superados (TLS para Redis, credenciais AWS via Secret, EKS
+				Auto Mode)</li
+			>
+			<li>Próximas melhorias</li>
+		</ul>
+		<hr />
+		<h2 id="checklist-final">Checklist Final</h2>
+		<h3 id="aws-ecr">AWS ECR</h3>
+		<ul class="contains-task-list">
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> 5
+				repositórios criados</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> Autenticação
+				ECR funcionando</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> Todas as
+				imagens pushadas</li
+			>
+		</ul>
+		<h3 id="infraestrutura-aws">Infraestrutura AWS</h3>
+		<ul class="contains-task-list">
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> 3 bancos RDS
+				PostgreSQL criados</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> ElastiCache
+				Redis criado</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> DynamoDB
+				tabela criada</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> SQS fila
+				criada</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> Endpoints
+				anotados</li
+			>
+		</ul>
+		<h3 id="kubernetes-eks">Kubernetes EKS</h3>
+		<ul class="contains-task-list">
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> Cluster
+				criado e ativo (com EKS Auto Mode)</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> Nós
+				provisionados automaticamente (EKS Auto Mode)</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> kubectl
+				conectado</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" />
+				<strong>kube-proxy instalado</strong> (CRÍTICO para ElastiCache)</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" />
+				<strong>Amazon VPC CNI instalado</strong> (CRÍTICO para networking)</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" />
+				<strong>CoreDNS instalado</strong> (CRÍTICO para DNS)</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> Metrics
+				Server instalado</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> Nginx Ingress
+				instalado</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> Namespace
+				criado</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> Secrets
+				criados (incluindo aws-credentials)</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> ConfigMap
+				criado (com REDIS_TLS=true)</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> Deployments
+				aplicados</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> Services
+				criados</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> Ingress
+				criado</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> HPA
+				criado</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" />
+				<strong>Credenciais AWS configuradas</strong> (via Secret)</li
+			>
+		</ul>
+		<h3 id="validação">Validação</h3>
+		<ul class="contains-task-list">
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> Todos os pods
+				rodando</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> Health checks
+				funcionando</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> Testes de
+				integração passando</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> HPA
+				funcionando (testado com carga)</li
+			>
+		</ul>
+		<h3 id="apresentação">Apresentação</h3>
+		<ul class="contains-task-list">
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> Vídeo gravado
+				(5-10 minutos)</li
+			>
+			<li class="task-list-item enabled"
+				><input class="task-list-item-checkbox" type="checkbox" /> Link
+				enviado</li
+			>
+		</ul>
+		<hr />
+		<h2 id="comandos-de-referência">Comandos de Referência</h2>
+		<pre><code class="language-bash"><span class="hljs-comment"># ============ KUBERNETES ============</span>
+kubectl get pods -n togglemaster
+kubectl get services -n togglemaster
+kubectl get ingress -n togglemaster
+kubectl get hpa -n togglemaster
+kubectl logs -f &lt;pod&gt; -n togglemaster
+kubectl describe pod &lt;pod&gt; -n togglemaster
+
+<span class="hljs-comment"># ============ AWS CLI ============</span>
+aws eks describe-cluster --name togglemaster-cluster --region us-east-1
+aws rds describe-db-instances --region us-east-1
+aws elasticache describe-cache-clusters --region us-east-1
+aws dynamodb list-tables --region us-east-1
+aws sqs list-queues --region us-east-1
+</code></pre>
+		<hr />
+		<h2 id="troubleshooting-1">Troubleshooting</h2>
+		<h3 id="pods-não-iniciam-crashloopbackoff"
+			>Pods não iniciam (CrashLoopBackOff)</h3
+		>
+		<pre><code class="language-bash">kubectl describe pod &lt;pod-name&gt; -n togglemaster
+kubectl logs &lt;pod-name&gt; -n togglemaster
+</code></pre>
+		<h3 id="hpa-não-funciona">HPA não funciona</h3>
+		<pre><code class="language-bash"><span class="hljs-comment"># Verificar Metrics Server</span>
+kubectl get pods -n kube-system | grep metrics
+
+<span class="hljs-comment"># Ver detalhes do HPA</span>
+kubectl describe hpa evaluation-hpa -n togglemaster
+</code></pre>
+		<h3 id="erro-de-conexão-com-rds">Erro de conexão com RDS</h3>
+		<ul>
+			<li>Verificar Security Group do RDS</li>
+			<li>Deve permitir tráfego da VPC do EKS na porta 5432</li>
+		</ul>
+		<hr />
+		<h2 id="️-problemas-conhecidos-e-soluções-aws-academy"
+			>⚠️ PROBLEMAS CONHECIDOS E SOLUÇÕES (AWS Academy)</h2
+		>
+		<h3 id="problema-1-loadbalancer-não-cria-subnet-tags"
+			>Problema 1: LoadBalancer não cria (subnet tags)</h3
+		>
+		<p><strong>Erro:</strong></p>
+		<pre><code>Warning FailedBuildModel: unable to resolve at least one subnet (0 match VPC and tags: [kubernetes.io/role/internal-elb])
+</code></pre>
+		<p><strong>Solução:</strong></p>
+		<pre><code class="language-bash"><span class="hljs-comment"># Adicionar tags às subnets</span>
+<span class="hljs-keyword">for</span> subnet <span class="hljs-keyword">in</span> &lt;SUBNET_IDS&gt;; <span class="hljs-keyword">do</span>
+  aws ec2 create-tags --resources <span class="hljs-variable">$subnet</span> --tags \
+    Key=kubernetes.io/cluster/togglemaster-cluster,Value=shared \
+    Key=kubernetes.io/role/elb,Value=1 \
+    Key=kubernetes.io/role/internal-elb,Value=1
+<span class="hljs-keyword">done</span>
+</code></pre>
+		<h3 id="problema-2-coredns-não-conecta-à-api-kubernetes"
+			>Problema 2: CoreDNS não conecta à API Kubernetes</h3
+		>
+		<p><strong>Erro nos logs:</strong></p>
+		<pre><code>[INFO] plugin/kubernetes: waiting for Kubernetes API before starting server
+[ERROR] plugin/kubernetes: Failed to watch
+</code></pre>
+		<p><strong>Causa:</strong> Security Group não permite tráfego da VPC.</p>
+		<p><strong>Solução:</strong></p>
+		<pre><code class="language-bash"><span class="hljs-comment"># Obter SG do cluster e CIDR da VPC</span>
+SG_ID=$(aws eks describe-cluster --name togglemaster-cluster --query <span class="hljs-string">&#x27;cluster.resourcesVpcConfig.clusterSecurityGroupId&#x27;</span> --output text)
+VPC_CIDR=$(aws ec2 describe-vpcs --vpc-ids $(aws eks describe-cluster --name togglemaster-cluster --query <span class="hljs-string">&#x27;cluster.resourcesVpcConfig.vpcId&#x27;</span> --output text) --query <span class="hljs-string">&#x27;Vpcs[0].CidrBlock&#x27;</span> --output text)
+
+<span class="hljs-comment"># Adicionar regra</span>
+aws ec2 authorize-security-group-ingress --group-id <span class="hljs-variable">$SG_ID</span> --protocol all --port -1 --cidr <span class="hljs-variable">$VPC_CIDR</span>
+
+<span class="hljs-comment"># Reiniciar CoreDNS</span>
+kubectl rollout restart deployment coredns -n kube-system
+</code></pre>
+		<h3 id="problema-3-pods-em-nós-do-nodegroup-não-resolvem-dns"
+			>Problema 3: Pods em nós do NodeGroup não resolvem DNS</h3
+		>
+		<p
+			><strong>Sintoma:</strong> Pods em nós
+			<code>ip-172-31-x-x.ec2.internal</code> não conseguem resolver DNS, mas
+			pods em nós <code>i-xxxxxx</code> (EKS Auto) funcionam.</p
+		>
+		<p
+			><strong>Solução:</strong> Adicionar <code>nodeSelector</code> aos
+			deployments para usar apenas nós EKS Auto:</p
+		>
+		<pre><code class="language-yaml"><span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">template:</span>
+    <span class="hljs-attr">spec:</span>
+      <span class="hljs-attr">nodeSelector:</span>
+        <span class="hljs-attr">eks.amazonaws.com/compute-type:</span> <span class="hljs-string">auto</span>
+</code></pre>
+		<p><strong>Ou via kubectl patch:</strong></p>
+		<pre><code class="language-bash">kubectl patch deployment &lt;deployment-name&gt; -n togglemaster --<span class="hljs-built_in">type</span>=json -p=<span class="hljs-string">&#x27;[{&quot;op&quot;:&quot;add&quot;,&quot;path&quot;:&quot;/spec/template/spec/nodeSelector&quot;,&quot;value&quot;:{&quot;eks.amazonaws.com/compute-type&quot;:&quot;auto&quot;}}]&#x27;</span>
+</code></pre>
+		<h3 id="problema-4-nginx-ingress-controller-webhook-falha"
+			>Problema 4: NGINX Ingress Controller webhook falha</h3
+		>
+		<p><strong>Erro:</strong></p>
+		<pre><code>MountVolume.SetUp failed for volume &quot;webhook-cert&quot; : secret &quot;ingress-nginx-admission&quot; not found
+</code></pre>
+		<p><strong>Solução:</strong></p>
+		<pre><code class="language-bash"><span class="hljs-comment"># Deletar webhook temporariamente</span>
+kubectl delete validatingwebhookconfiguration ingress-nginx-admission
+
+<span class="hljs-comment"># Ou criar secret manualmente com certificados</span>
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout /tmp/tls.key -out /tmp/tls.crt \
+  -subj <span class="hljs-string">&quot;//CN=ingress-nginx-controller-admission.ingress-nginx.svc&quot;</span>
+
+kubectl create secret generic ingress-nginx-admission \
+  --namespace=ingress-nginx \
+  --from-file=tls.crt=/tmp/tls.crt \
+  --from-file=tls.key=/tmp/tls.key \
+  --from-file=ca.crt=/tmp/tls.crt
+</code></pre>
+		<h3 id="problema-5-erro-relation-does-not-exist-no-banco-de-dados"
+			>Problema 5: Erro &quot;relation does not exist&quot; no banco de
+			dados</h3
+		>
+		<p><strong>Erro:</strong></p>
+		<pre><code>ERROR: relation &quot;api_keys&quot; does not exist (SQLSTATE 42P01)
+</code></pre>
+		<p
+			><strong>Causa:</strong> Migrações de banco de dados não foram
+			executadas.</p
+		>
+		<p
+			><strong>Solução:</strong> Executar migrações SQL no RDS antes de iniciar
+			os serviços:</p
+		>
+		<pre><code class="language-sql"><span class="hljs-comment">-- Conectar ao RDS e executar:</span>
+<span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> IF <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">EXISTS</span> api_keys (
+    id SERIAL <span class="hljs-keyword">PRIMARY</span> KEY,
+    key <span class="hljs-type">VARCHAR</span>(<span class="hljs-number">255</span>) <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">NULL</span> <span class="hljs-keyword">UNIQUE</span>,
+    name <span class="hljs-type">VARCHAR</span>(<span class="hljs-number">255</span>),
+    created_at <span class="hljs-type">TIMESTAMP</span> <span class="hljs-keyword">DEFAULT</span> <span class="hljs-built_in">CURRENT_TIMESTAMP</span>
+);
+</code></pre>
+		<h3 id="problema-6-analytics-service---credenciais-aws-não-funcionam-imds"
+			>Problema 6: Analytics Service - Credenciais AWS não funcionam (IMDS)</h3
+		>
+		<p><strong>Erro:</strong></p>
+		<pre><code>ERROR - Erro ao garantir existência da tabela: Unable to locate credentials
+ou
+ERROR - The security token included in the request is invalid
+</code></pre>
+		<p
+			><strong>Causa:</strong> No AWS Academy, os nós do EKS Auto Mode têm
+			<code>HttpPutResponseHopLimit: 1</code>, impedindo que containers acessem
+			o IMDS para obter credenciais AWS automaticamente.</p
+		>
+		<p><strong>Solução:</strong> Usar credenciais via Secret do Kubernetes:</p>
+		<pre><code class="language-bash"><span class="hljs-comment"># Executar o script de atualização de credenciais</span>
+.\docs\scripts\windows\update-aws-credentials.bat  <span class="hljs-comment"># Windows</span>
+./docs/scripts/linux/update-aws-credentials.sh     <span class="hljs-comment"># Linux/Mac</span>
+</code></pre>
+		<p><strong>Ou manualmente:</strong></p>
+		<pre><code class="language-bash"><span class="hljs-comment"># Obter credenciais do arquivo ~/.aws/credentials</span>
+AWS_ACCESS_KEY_ID=$(grep aws_access_key_id ~/.aws/credentials | <span class="hljs-built_in">cut</span> -d<span class="hljs-string">&#x27;=&#x27;</span> -f2 | <span class="hljs-built_in">tr</span> -d <span class="hljs-string">&#x27; &#x27;</span>)
+AWS_SECRET_ACCESS_KEY=$(grep aws_secret_access_key ~/.aws/credentials | <span class="hljs-built_in">cut</span> -d<span class="hljs-string">&#x27;=&#x27;</span> -f2 | <span class="hljs-built_in">tr</span> -d <span class="hljs-string">&#x27; &#x27;</span>)
+AWS_SESSION_TOKEN=$(grep aws_session_token ~/.aws/credentials | <span class="hljs-built_in">cut</span> -d<span class="hljs-string">&#x27;=&#x27;</span> -f2- | sed <span class="hljs-string">&#x27;s/^ *//&#x27;</span>)
+
+<span class="hljs-comment"># Criar secret no Kubernetes</span>
+<span class="hljs-built_in">cat</span> &gt; /tmp/aws-credentials.yaml &lt;&lt; <span class="hljs-string">EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-credentials
+  namespace: togglemaster
+type: Opaque
+stringData:
+  AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+  AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+  AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN}
+EOF</span>
+
+kubectl apply -f /tmp/aws-credentials.yaml
+
+<span class="hljs-comment"># Reiniciar serviços</span>
+kubectl rollout restart deployment/analytics-service -n togglemaster
+kubectl rollout restart deployment/evaluation-service -n togglemaster
+</code></pre>
+		<p
+			><strong>⚠️ NOTA:</strong> As credenciais do AWS Academy expiram quando a
+			sessão do lab termina. Execute o script novamente se necessário.</p
+		>
+		<h3
+			id="problema-7-evaluation-service---timeout-ao-conectar-ao-redis-elasticache"
+			>Problema 7: Evaluation Service - Timeout ao conectar ao Redis
+			(ElastiCache)</h3
+		>
+		<p><strong>Erro:</strong></p>
+		<pre><code>Não foi possível conectar ao Redis: read tcp 172.31.5.242:47910-&gt;172.31.13.182:6379: i/o timeout
+</code></pre>
+		<p
+			><strong>Causa:</strong> O Security Group do ElastiCache não permite
+			conexões do EKS na porta 6379.</p
+		>
+		<p><strong>Solução via AWS Console:</strong></p>
+		<ol>
+			<li
+				>Acesse o <strong>AWS Console</strong> &gt;
+				<strong>ElastiCache</strong> &gt; <strong>Serverless caches</strong></li
+			>
+			<li>Clique no cache <code>togglemaster-cache</code></li>
+			<li>Vá em <strong>Security groups</strong></li>
+			<li>Anote o Security Group ID (ex: <code>sg-xxxxxxxx</code>)</li>
+			<li
+				>Vá para <strong>EC2</strong> &gt; <strong>Security Groups</strong></li
+			>
+			<li>Encontre o Security Group do ElastiCache</li>
+			<li>Clique em <strong>Edit inbound rules</strong></li>
+			<li
+				>Adicione uma regra:
+				<ul>
+					<li><strong>Type:</strong> Custom TCP</li>
+					<li><strong>Port:</strong> 6379</li>
+					<li
+						><strong>Source:</strong> <code>172.31.0.0/16</code> (CIDR da VPC)
+						ou o Security Group do EKS</li
+					>
+				</ul>
+			</li>
+		</ol>
+		<p><strong>Solução via CLI:</strong></p>
+		<pre><code class="language-bash"><span class="hljs-comment"># Obter Security Group do ElastiCache (ajuste o nome se necessário)</span>
+ELASTICACHE_SG=$(aws elasticache describe-cache-clusters --query <span class="hljs-string">&quot;CacheClusters[0].SecurityGroups[0].SecurityGroupId&quot;</span> --output text)
+
+<span class="hljs-comment"># Adicionar regra para permitir tráfego da VPC</span>
+aws ec2 authorize-security-group-ingress \
+  --group-id <span class="hljs-variable">$ELASTICACHE_SG</span> \
+  --protocol tcp \
+  --port 6379 \
+  --cidr 172.31.0.0/16
+</code></pre>
+		<h3 id="problema-8-node-group-com-nodecreationfailure-aws-academy"
+			>Problema 8: Node Group com NodeCreationFailure (AWS Academy)</h3
+		>
+		<p><strong>Erro:</strong></p>
+		<pre><code>NodeCreationFailure: Instances failed to join the kubernetes cluster
+</code></pre>
+		<p
+			><strong>Causa:</strong> No AWS Academy, os Node Groups tradicionais podem
+			falhar devido a:</p
+		>
+		<ul>
+			<li>Problemas de IMDS (Instance Metadata Service)</li>
+			<li>Credenciais não propagadas corretamente</li>
+			<li>Falta de política AmazonEKS_CNI_Policy na LabRole</li>
+		</ul>
+		<p
+			><strong>Solução:</strong> Usar EKS Auto Mode em vez de Node Groups
+			tradicionais:</p
+		>
+		<ol>
+			<li>
+				<p
+					><strong
+						>Se você já criou um Node Group com falha, delete-o:</strong
+					></p
+				>
+				<pre><code class="language-bash">aws eks delete-nodegroup --cluster-name togglemaster-cluster --nodegroup-name togglemaster-workers --region us-east-1
+</code></pre>
+			</li>
+			<li>
+				<p
+					><strong>O EKS Auto Mode já provisiona nós automaticamente</strong> -
+					não precisa de Node Group</p
+				>
+			</li>
+			<li>
+				<p><strong>Verificar nós ativos:</strong></p>
+				<pre><code class="language-bash">kubectl get nodes
+</code></pre>
+			</li>
+		</ol>
+		<p
+			><strong>⚠️ NOTA:</strong> O EKS Auto Mode usa nós Bottlerocket que
+			funcionam corretamente no AWS Academy.</p
+		>
+		<h3 id="problema-9-loadbalancer-internal-vs-internet-facing"
+			>Problema 9: LoadBalancer Internal vs Internet-facing</h3
+		>
+		<p
+			><strong>Sintoma:</strong> Postman retorna timeout, mas serviços funcionam
+			internamente.</p
+		>
+		<p
+			><strong>Causa:</strong> O LoadBalancer do NGINX Ingress foi criado como
+			&quot;internal&quot; (IP privado) em vez de
+			&quot;internet-facing&quot;.</p
+		>
+		<p><strong>Solução:</strong></p>
+		<pre><code class="language-bash"><span class="hljs-comment"># Adicionar annotation para LoadBalancer internet-facing</span>
+kubectl annotate svc ingress-nginx-controller -n ingress-nginx \
+  <span class="hljs-string">&quot;service.beta.kubernetes.io/aws-load-balancer-scheme=internet-facing&quot;</span> --overwrite
+
+<span class="hljs-comment"># Recriar o serviço para aplicar a mudança</span>
+kubectl delete svc ingress-nginx-controller -n ingress-nginx
+kubectl apply -f - &lt;&lt;<span class="hljs-string">EOF
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: &quot;true&quot;
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+  name: ingress-nginx-controller
+  namespace: ingress-nginx
+spec:
+  externalTrafficPolicy: Local
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+  - name: https
+    port: 443
+    protocol: TCP
+    targetPort: https
+  selector:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+  type: LoadBalancer
+EOF</span>
+
+<span class="hljs-comment"># Aguardar novo hostname</span>
+kubectl get svc ingress-nginx-controller -n ingress-nginx
+</code></pre>
+		<hr />
+		<h2 id="limpeza-após-apresentação">Limpeza (Após Apresentação)</h2>
+		<pre><code class="language-bash"><span class="hljs-comment"># Kubernetes</span>
+kubectl delete namespace togglemaster
+
+<span class="hljs-comment"># AWS (via console)</span>
+<span class="hljs-comment"># Deletar: EKS cluster, RDS, ElastiCache, DynamoDB table, SQS queue</span>
+</code></pre>
+		<h3 id="problema-10-elasticache-serverless---requisito-de-tls"
+			>Problema 10: ElastiCache Serverless - Requisito de TLS</h3
+		>
+		<p><strong>Erro:</strong></p>
+		<pre><code>Não foi possível conectar ao Redis: context deadline exceeded
+</code></pre>
+		<p
+			><strong>Causa:</strong> O ElastiCache Serverless Redis
+			<strong>REQUER conexão TLS</strong>. Sem TLS, a conexão TCP é estabelecida
+			mas o protocolo Redis falha.</p
+		>
+		<p><strong>Testar se é problema de TLS:</strong></p>
+		<pre><code class="language-bash"><span class="hljs-comment"># Testar SEM TLS (vai falhar/hang)</span>
+kubectl run redis-test --<span class="hljs-built_in">rm</span> -i --restart=Never --image=redis:alpine -n togglemaster -- \
+  redis-cli -h togglemaster-cache-nlxlok.serverless.use1.cache.amazonaws.com -p 6379 PING
+
+<span class="hljs-comment"># Testar COM TLS (deve retornar PONG)</span>
+kubectl run redis-tls-test --<span class="hljs-built_in">rm</span> -i --restart=Never --image=redis:alpine -n togglemaster -- \
+  redis-cli -h togglemaster-cache-nlxlok.serverless.use1.cache.amazonaws.com -p 6379 --tls --insecure PING
+</code></pre>
+		<p
+			><strong>Solução:</strong> Adicionar configuração de TLS no ConfigMap e no
+			código:</p
+		>
+		<ol>
+			<li
+				><strong>Atualizar ConfigMap</strong>
+				(<code>k8s/configmap.yaml</code>):</li
+			>
+		</ol>
+		<pre><code class="language-yaml"><span class="hljs-attr">REDIS_HOST:</span> <span class="hljs-string">&quot;togglemaster-cache-nlxlok.serverless.use1.cache.amazonaws.com:6379&quot;</span>
+<span class="hljs-attr">REDIS_TLS:</span> <span class="hljs-string">&quot;true&quot;</span>
+</code></pre>
+		<ol start="2">
+			<li><strong>Aplicar ConfigMap:</strong></li>
+		</ol>
+		<pre><code class="language-bash">kubectl apply -f k8s/configmap.yaml
+</code></pre>
+		<ol start="3">
+			<li>
+				<p
+					><strong
+						>Reconstruir e fazer push da imagem do evaluation-service</strong
+					>
+					com suporte a TLS.</p
+				>
+			</li>
+			<li>
+				<p><strong>Reiniciar o deployment:</strong></p>
+			</li>
+		</ol>
+		<pre><code class="language-bash">kubectl rollout restart deployment/evaluation-service -n togglemaster
+</code></pre>
+		<hr />
+		<h2 id="-valores-reais-do-deploy-referência"
+			>📋 Valores Reais do Deploy (Referência)</h2
+		>
+		<h3 id="ids-e-endpoints-do-cluster-atual"
+			>IDs e Endpoints do Cluster Atual</h3
+		>
+		<table>
+			<thead>
+				<tr>
+					<th>Recurso</th>
+					<th>Valor</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><strong>AWS Account ID</strong></td>
+					<td><code>886833754732</code></td>
+				</tr>
+				<tr>
+					<td><strong>VPC ID</strong></td>
+					<td><code>vpc-018e2024769475595</code></td>
+				</tr>
+				<tr>
+					<td><strong>VPC CIDR</strong></td>
+					<td><code>172.31.0.0/16</code></td>
+				</tr>
+				<tr>
+					<td><strong>Cluster Security Group</strong></td>
+					<td><code>sg-01896e6a89310d603</code></td>
+				</tr>
+				<tr>
+					<td><strong>Default Security Group</strong></td>
+					<td><code>sg-0c97beab8695d3849</code></td>
+				</tr>
+			</tbody>
+		</table>
+		<h3 id="subnets">Subnets</h3>
+		<table>
+			<thead>
+				<tr>
+					<th>Subnet ID</th>
+					<th>AZ</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>subnet-0cdd01015a2f551fe</code></td>
+					<td>us-east-1a</td>
+				</tr>
+				<tr>
+					<td><code>subnet-0d16cb4f2d00d5fce</code></td>
+					<td>us-east-1a</td>
+				</tr>
+				<tr>
+					<td><code>subnet-0fa44af5c556dd9c5</code></td>
+					<td>us-east-1a</td>
+				</tr>
+				<tr>
+					<td><code>subnet-01a2363a89089e31e</code></td>
+					<td>us-east-1c</td>
+				</tr>
+				<tr>
+					<td><code>subnet-0c43fc638038eb98b</code></td>
+					<td>us-east-1c</td>
+				</tr>
+			</tbody>
+		</table>
+		<h3 id="endpoints-rds">Endpoints RDS</h3>
+		<table>
+			<thead>
+				<tr>
+					<th>Banco</th>
+					<th>Endpoint</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>auth-db</td>
+					<td
+						><code
+							>togglemaster-auth.c6h7fxfgdm94.us-east-1.rds.amazonaws.com</code
+						></td
+					>
+				</tr>
+				<tr>
+					<td>flags-db</td>
+					<td
+						><code
+							>togglemaster-flags.c6h7fxfgdm94.us-east-1.rds.amazonaws.com</code
+						></td
+					>
+				</tr>
+				<tr>
+					<td>targeting-db</td>
+					<td
+						><code
+							>togglemaster-targeting.c6h7fxfgdm94.us-east-1.rds.amazonaws.com</code
+						></td
+					>
+				</tr>
+			</tbody>
+		</table>
+		<h3 id="outros-endpoints">Outros Endpoints</h3>
+		<table>
+			<thead>
+				<tr>
+					<th>Recurso</th>
+					<th>Endpoint</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>Redis</td>
+					<td
+						><code
+							>togglemaster-cache-nlxlok.serverless.use1.cache.amazonaws.com:6379</code
+						></td
+					>
+				</tr>
+				<tr>
+					<td>SQS</td>
+					<td
+						><code
+							>https://sqs.us-east-1.amazonaws.com/886833754732/togglemaster-analytics-queue</code
+						></td
+					>
+				</tr>
+				<tr>
+					<td>DynamoDB Table</td>
+					<td><code>ToggleMasterAnalytics</code></td>
+				</tr>
+				<tr>
+					<td>LoadBalancer NLB</td>
+					<td
+						><code
+							>k8s-ingressn-ingressn-4b2dffb93b-3e52bb9ba052b281.elb.us-east-1.amazonaws.com</code
+						></td
+					>
+				</tr>
+			</tbody>
+		</table>
+		<h3 id="nós-do-cluster">Nós do Cluster</h3>
+		<table>
+			<thead>
+				<tr>
+					<th>Node Name</th>
+					<th>Tipo</th>
+					<th>Status</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code>i-02b0f95b9feba591f</code></td>
+					<td>Bottlerocket (EKS Auto)</td>
+					<td>✅ Funciona</td>
+				</tr>
+				<tr>
+					<td><code>i-082762dac031f313a</code></td>
+					<td>Bottlerocket (EKS Auto)</td>
+					<td>✅ Funciona</td>
+				</tr>
+				<tr>
+					<td><code>ip-172-31-23-183.ec2.internal</code></td>
+					<td>Amazon Linux 2023</td>
+					<td>⚠️ DNS problemático</td>
+				</tr>
+				<tr>
+					<td><code>ip-172-31-3-6.ec2.internal</code></td>
+					<td>Amazon Linux 2023</td>
+					<td>⚠️ DNS problemático</td>
+				</tr>
+			</tbody>
+		</table>
+		<p
+			><strong>⚠️ Nota:</strong> Em ambientes AWS Academy, os nós gerenciados
+			por EKS Auto (Bottlerocket) funcionam corretamente com DNS. Os nós do
+			nodegroup padrão podem ter problemas de conectividade com a API do
+			Kubernetes.</p
+		>
+		<hr />
+		<h2 id="-credenciais-aws-para-serviços-importante"
+			>🔐 Credenciais AWS para Serviços (IMPORTANTE)</h2
+		>
+		<h3 id="por-que-precisamos-de-credenciais-no-kubernetes"
+			>Por que precisamos de credenciais no Kubernetes?</h3
+		>
+		<p
+			>Em ambientes <strong>AWS Academy</strong>, os nós do EKS Auto Mode têm
+			<code>HttpPutResponseHopLimit: 1</code>, o que impede que containers
+			acessem o <strong>Instance Metadata Service (IMDS)</strong> para obter
+			credenciais AWS automaticamente.</p
+		>
+		<p><strong>Serviços afetados:</strong></p>
+		<ul>
+			<li><code>analytics-service</code> - precisa acessar DynamoDB e SQS</li>
+			<li><code>evaluation-service</code> - precisa acessar SQS</li>
+		</ul>
+		<h3 id="como-atualizar-as-credenciais">Como atualizar as credenciais</h3>
+		<p
+			>As credenciais do AWS Academy são <strong>temporárias</strong> e expiram
+			quando a sessão do lab termina. Use o script abaixo para atualizar:</p
+		>
+		<p><strong>Windows:</strong></p>
+		<pre><code class="language-bash">.\docs\scripts\windows\update-aws-credentials.bat
+</code></pre>
+		<p><strong>Linux/Mac:</strong></p>
+		<pre><code class="language-bash"><span class="hljs-built_in">chmod</span> +x ./docs/scripts/linux/update-aws-credentials.sh
+./docs/scripts/linux/update-aws-credentials.sh
+</code></pre>
+		<h3 id="atualização-manual-se-necessário"
+			>Atualização manual (se necessário)</h3
+		>
+		<pre><code class="language-bash"><span class="hljs-comment"># 1. Obter credenciais do arquivo ~/.aws/credentials</span>
+AWS_ACCESS_KEY_ID=$(grep aws_access_key_id ~/.aws/credentials | <span class="hljs-built_in">cut</span> -d<span class="hljs-string">&#x27;=&#x27;</span> -f2 | <span class="hljs-built_in">tr</span> -d <span class="hljs-string">&#x27; &#x27;</span>)
+AWS_SECRET_ACCESS_KEY=$(grep aws_secret_access_key ~/.aws/credentials | <span class="hljs-built_in">cut</span> -d<span class="hljs-string">&#x27;=&#x27;</span> -f2 | <span class="hljs-built_in">tr</span> -d <span class="hljs-string">&#x27; &#x27;</span>)
+AWS_SESSION_TOKEN=$(grep aws_session_token ~/.aws/credentials | <span class="hljs-built_in">cut</span> -d<span class="hljs-string">&#x27;=&#x27;</span> -f2- | sed <span class="hljs-string">&#x27;s/^ *//&#x27;</span>)
+
+<span class="hljs-comment"># 2. Criar secret no Kubernetes</span>
+<span class="hljs-built_in">cat</span> &gt; /tmp/aws-credentials.yaml &lt;&lt; <span class="hljs-string">EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-credentials
+  namespace: togglemaster
+type: Opaque
+stringData:
+  AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+  AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+  AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN}
+EOF</span>
+
+kubectl apply -f /tmp/aws-credentials.yaml
+
+<span class="hljs-comment"># 3. Reiniciar serviços afetados</span>
+kubectl rollout restart deployment/analytics-service -n togglemaster
+kubectl rollout restart deployment/evaluation-service -n togglemaster
+</code></pre>
+		<h3 id="verificar-se-as-credenciais-estão-funcionando"
+			>Verificar se as credenciais estão funcionando</h3
+		>
+		<pre><code class="language-bash"><span class="hljs-comment"># Verificar logs do analytics-service</span>
+kubectl logs -n togglemaster deployment/analytics-service --<span class="hljs-built_in">tail</span>=20
+
+<span class="hljs-comment"># Deve mostrar: &quot;Tabela ToggleMasterAnalytics já existe.&quot;</span>
+<span class="hljs-comment"># Se mostrar erro de token inválido, atualize as credenciais</span>
+</code></pre>
+		<hr />
+		<h2 id="-script-de-deploy-completo-quick-start"
+			>🚀 Script de Deploy Completo (Quick Start)</h2
+		>
+		<pre><code class="language-bash"><span class="hljs-comment"># ============================================</span>
+<span class="hljs-comment"># 1. CONFIGURAR VPC E SECURITY GROUPS</span>
+<span class="hljs-comment"># ============================================</span>
+<span class="hljs-comment"># Adicionar tags às subnets</span>
+<span class="hljs-keyword">for</span> subnet <span class="hljs-keyword">in</span> subnet-0cdd01015a2f551fe subnet-0d16cb4f2d00d5fce subnet-0fa44af5c556dd9c5 subnet-01a2363a89089e31e subnet-0c43fc638038eb98b; <span class="hljs-keyword">do</span>
+  aws ec2 create-tags --resources <span class="hljs-variable">$subnet</span> --tags \
+    Key=kubernetes.io/cluster/togglemaster-cluster,Value=shared \
+    Key=kubernetes.io/role/elb,Value=1 \
+    Key=kubernetes.io/role/internal-elb,Value=1
+<span class="hljs-keyword">done</span>
+
+<span class="hljs-comment"># Adicionar regra de Security Group</span>
+aws ec2 authorize-security-group-ingress \
+  --group-id sg-01896e6a89310d603 \
+  --protocol all --port -1 \
+  --cidr 172.31.0.0/16
+
+<span class="hljs-comment"># ============================================</span>
+<span class="hljs-comment"># 2. INSTALAR NGINX INGRESS CONTROLLER</span>
+<span class="hljs-comment"># ============================================</span>
+kubectl apply -f ingress/ingress-nginx.yaml
+
+<span class="hljs-comment"># Aguardar e criar secret se necessário</span>
+<span class="hljs-built_in">sleep</span> 30
+kubectl create secret generic ingress-nginx-admission \
+  --namespace=ingress-nginx \
+  --from-literal=ca.crt=<span class="hljs-string">&quot;&quot;</span> --from-literal=tls.crt=<span class="hljs-string">&quot;&quot;</span> --from-literal=tls.key=<span class="hljs-string">&quot;&quot;</span> 2&gt;/dev/null || <span class="hljs-literal">true</span>
+
+<span class="hljs-comment"># Configurar nodeSelector</span>
+kubectl patch deployment ingress-nginx-controller -n ingress-nginx --<span class="hljs-built_in">type</span>=json \
+  -p=<span class="hljs-string">&#x27;[{&quot;op&quot;:&quot;add&quot;,&quot;path&quot;:&quot;/spec/template/spec/nodeSelector&quot;,&quot;value&quot;:{&quot;eks.amazonaws.com/compute-type&quot;:&quot;auto&quot;}}]&#x27;</span>
+
+<span class="hljs-comment"># ============================================</span>
+<span class="hljs-comment"># 3. DEPLOY DA APLICAÇÃO</span>
+<span class="hljs-comment"># ============================================</span>
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/secrets.yaml
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/deployments.yaml
+kubectl apply -f k8s/ingress.yaml
+kubectl apply -f k8s/hpa.yaml
+
+<span class="hljs-comment"># ============================================</span>
+<span class="hljs-comment"># 4. CONFIGURAR CREDENCIAIS AWS (AWS Academy)</span>
+<span class="hljs-comment"># ============================================</span>
+<span class="hljs-comment"># Executar script de atualização de credenciais</span>
+.\docs\scripts\windows\update-aws-credentials.bat  <span class="hljs-comment"># Windows</span>
+<span class="hljs-comment"># ou</span>
+./docs/scripts/linux/update-aws-credentials.sh     <span class="hljs-comment"># Linux/Mac</span>
+
+<span class="hljs-comment"># ============================================</span>
+<span class="hljs-comment"># 5. VERIFICAR DEPLOY</span>
+<span class="hljs-comment"># ============================================</span>
+kubectl get pods -n togglemaster
+kubectl get ingress -n togglemaster
+kubectl get svc -n ingress-nginx
+
+<span class="hljs-comment"># Testar health checks</span>
+INGRESS_URL=$(kubectl get ingress togglemaster-ingress -n togglemaster -o jsonpath=<span class="hljs-string">&#x27;{.status.loadBalancer.ingress[0].hostname}&#x27;</span>)
+curl http://<span class="hljs-variable">$INGRESS_URL</span>/auth/health
+curl http://<span class="hljs-variable">$INGRESS_URL</span>/flags/health
+curl http://<span class="hljs-variable">$INGRESS_URL</span>/targeting/health
+curl http://<span class="hljs-variable">$INGRESS_URL</span>/evaluate/health
+curl http://<span class="hljs-variable">$INGRESS_URL</span>/analytics/health
+</code></pre>
+		<hr />
+		<p><strong>Boa sorte! 🚀</strong></p>
+
+		<script
+			async
+			src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script>
+	</body>
+</html>
