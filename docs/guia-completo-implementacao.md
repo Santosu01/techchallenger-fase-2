@@ -75,8 +75,8 @@ aws ecr get-login-password --region us-east-1 | \
 # ==================== AUTH SERVICE ====================
 cd auth-service
 docker build -t auth-service .
-docker tag auth-service:latest <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
-docker push <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
+docker tag auth-service:latest 891377095805.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
+docker push 891377095805.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
 cd ..
 
 # ==================== FLAG SERVICE ====================
@@ -139,7 +139,7 @@ Use a região **us-east-1** para todos os recursos.
 3. Em **Connectivity**:
    - VPC: Default VPC
    - Public access: **Yes**
-   - VPC security group: Criar novo ou usar default
+   - VPC security group: Criar novo ou usar **default**
    - Database port: 5432
 
 4. Clique em **Create database**
@@ -456,6 +456,25 @@ for subnet in subnet-0cdd01015a2f551fe subnet-0d16cb4f2d00d5fce subnet-0fa44af5c
 done
 ```
 
+Ana
+<!-- # 1️⃣ Obter o VPC ID do cluster
+$VPC_ID = aws eks describe-cluster --name togglemaster-cluster --query "cluster.resourcesVpcConfig.vpcId" --output text
+Write-Host "VPC ID: $VPC_ID"
+
+# 2️⃣ Obter todos os IDs de subnets do VPC e separar corretamente
+$Subnets = (aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" --query "Subnets[*].SubnetId" --output text) -split '\s+'
+Write-Host "Subnets encontradas:"
+$Subnets
+
+# 3️⃣ Adicionar as tags a cada subnet individualmente
+foreach ($subnet in $Subnets) {
+    Write-Host "Adicionando tags à subnet $subnet"
+    aws ec2 create-tags --resources $subnet --tags `
+        Key=kubernetes.io/cluster/togglemaster-cluster,Value=shared `
+        Key=kubernetes.io/role/elb,Value=1 `
+        Key=kubernetes.io/role/internal-elb,Value=1
+} -->
+
 #### 3.6.2. Configurar Security Groups
 
 Adicionar regras para permitir tráfego interno da VPC:
@@ -480,6 +499,13 @@ aws ec2 authorize-security-group-ingress \
 - VPC CIDR: `172.31.0.0/16`
 - Cluster SG: `sg-01896e6a89310d603`
 
+ana
+aws ec2 authorize-security-group-ingress `
+  --group-id sg-0dfef95a708f046b0 `
+  --protocol all `
+  --port -1 `
+  --cidr 172.31.0.0/16
+
 ### 3.7. Instalar Metrics Server (DEPOIS dos nós ativos)
 
 **⚠️ NOTA:** O Metrics Server deve ser instalado DEPOIS que os nós estiverem ativos. Ele é necessário para o Horizontal Pod Autoscaler (HPA).
@@ -493,6 +519,7 @@ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/late
 
 # Verificar se está rodando
 kubectl get pods -n kube-system | grep metrics
+# kubectl get pods -n kube-system | Select-String metrics
 
 # Testar métricas
 kubectl top nodes
