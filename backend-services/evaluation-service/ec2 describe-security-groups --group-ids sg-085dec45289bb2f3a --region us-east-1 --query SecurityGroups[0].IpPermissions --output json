@@ -1,0 +1,50 @@
+[
+    {
+        "IpProtocol": "tcp",
+        "FromPort": 5432,
+        "ToPort": 5432,
+        "UserIdGroupPairs": [
+            {
+                "UserId": "154367514500",
+                "GroupId": "sg-085dec45289bb2f3a"
+            }
+        ],
+        "IpRanges": [
+            {
+                "CidrIp": "172.31.0.0/16"
+            }
+        ],
+        "Ipv6Ranges": [],
+        "PrefixListIds": []
+    },
+    {
+        "IpProtocol": "-1",
+        "UserIdGroupPairs": [
+            {
+                "UserId": "154367514500",
+                "GroupId": "sg-085dec45289bb2f3a"
+            }
+        ],
+        "IpRanges": [],
+        "Ipv6Ranges": [],
+        "PrefixListIds": []
+    },
+    {
+        "IpProtocol": "tcp",
+        "FromPort": 6379,
+        "ToPort": 6379,
+        "UserIdGroupPairs": [
+            {
+                "UserId": "154367514500",
+                "GroupId": "sg-085dec45289bb2f3a"
+            }
+        ],
+        "IpRanges": [
+            {
+                "CidrIp": "172.31.0.0/16"
+            }
+        ],
+        "Ipv6Ranges": [],
+        "PrefixListIds": []
+    }
+]

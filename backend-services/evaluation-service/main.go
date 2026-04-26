@@ -76,22 +76,24 @@ func main() {
 	// Configura TLS (necessário para ElastiCache Serverless)
 	redisTLS := os.Getenv("REDIS_TLS") == "true"
 
-	rdb := redis.NewClient(&redis.Options{
+	opts := &redis.Options{
 		Addr:         redisHost,
-		DialTimeout:  5 * time.Second,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
-		PoolTimeout:  10 * time.Second,
+		DialTimeout:  30 * time.Second,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		PoolTimeout:  30 * time.Second,
 		PoolSize:     10,
-	})
+	}
 
-	// Habilita TLS se configurado
+	// Configura TLS ANTES de criar o cliente
 	if redisTLS {
-		rdb.Options().TLSConfig = &tls.Config{
+		opts.TLSConfig = &tls.Config{
 			InsecureSkipVerify: true, // Necessário para ElastiCache Serverless
 		}
 		log.Println("TLS habilitado para conexão Redis")
 	}
+
+	rdb := redis.NewClient(opts)
 
 	// Verifica conexão com Redis
 	pingCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

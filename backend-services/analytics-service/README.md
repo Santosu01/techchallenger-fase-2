@@ -22,7 +22,9 @@ Sua única função é:
 Este serviço espera que uma tabela específica exista no DynamoDB.
 
 **Nome da Tabela:** `ToggleMasterAnalytics`
-**Chave Primária (Partition Key):** `event_id` (do tipo String)
+**Chave Primária (Partition Key):** `requestId` (do tipo String)
+
+> **⚠️ IMPORTANTE:** A chave de partição é `requestId` (não `event_id`). Certifique-se de que o código do `app.py` e a tabela DynamoDB usem a mesma chave.
 
 Você pode criar esta tabela usando o console da AWS ou com o seguinte comando da AWS CLI:
 
@@ -30,14 +32,13 @@ Você pode criar esta tabela usando o console da AWS ou com o seguinte comando d
 aws dynamodb create-table \
     --table-name ToggleMasterAnalytics \
     --attribute-definitions \
-        AttributeName=event_id,AttributeType=S \
+        AttributeName=requestId,AttributeType=S \
     --key-schema \
-        AttributeName=event_id,KeyType=HASH \
-    --provisioned-throughput \
-        ReadCapacityUnits=1,WriteCapacityUnits=1
+        AttributeName=requestId,KeyType=HASH \
+    --billing-mode PAY_PER_REQUEST
 ```
 
-(Nota: O throughput provisionado acima é o mínimo possível, ideal para o free tier/testes).
+> **Nota:** O modo `PAY_PER_REQUEST` (on-demand) é recomendado para evitar limitação de throughput durante testes de carga.
 
 ## 🚀 Rodando Localmente
 
@@ -73,6 +74,8 @@ gunicorn --bind 0.0.0.0:8005 app:app
 ```
 
 O servidor estará rodando em `http://localhost:8005`. Você verá logs no terminal assim que o worker SQS iniciar e (eventualmente) processar mensagens.
+
+> **⚠️ Nota sobre portas no Kubernetes:** No deploy K8s, o analytics-service roda internamente na porta **8006** (`containerPort`), mas o Kubernetes Service mapeia a porta **8005** → **8006**. Localmente, use a porta 8005 normalmente.
 
 ## 🧪 Testando o Serviço
 

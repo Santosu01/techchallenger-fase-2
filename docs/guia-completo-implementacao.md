@@ -63,10 +63,10 @@ Este guia detalha os passos para deploy em cloud (Kubernetes/EKS), considerando 
 ### 1.2. Autenticar no ECR
 
 ```bash
-# Substitua <SEU_ID_ECR> pelo seu ID da AWS (ex: 123456789012)
+# Seu ID da AWS: 154367514500
 aws ecr get-login-password --region us-east-1 | \
   docker login --username AWS --password-stdin \
-  <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com
+  154367514500.dkr.ecr.us-east-1.amazonaws.com
 ```
 
 ### 1.3. Build e Push de Cada Serviço
@@ -75,36 +75,36 @@ aws ecr get-login-password --region us-east-1 | \
 # ==================== AUTH SERVICE ====================
 cd auth-service
 docker build -t auth-service .
-docker tag auth-service:latest <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
-docker push <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
+docker tag auth-service:latest 154367514500.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
+docker push 154367514500.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
 cd ..
 
 # ==================== FLAG SERVICE ====================
 cd flag-service
 docker build -t flag-service .
-docker tag flag-service:latest <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/flag-service:latest
-docker push <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/flag-service:latest
+docker tag flag-service:latest 154367514500.dkr.ecr.us-east-1.amazonaws.com/flag-service:latest
+docker push 154367514500.dkr.ecr.us-east-1.amazonaws.com/flag-service:latest
 cd ..
 
 # ==================== TARGETING SERVICE ====================
 cd targeting-service
 docker build -t targeting-service .
-docker tag targeting-service:latest <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/targeting-service:latest
-docker push <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/targeting-service:latest
+docker tag targeting-service:latest 154367514500.dkr.ecr.us-east-1.amazonaws.com/targeting-service:latest
+docker push 154367514500.dkr.ecr.us-east-1.amazonaws.com/targeting-service:latest
 cd ..
 
 # ==================== EVALUATION SERVICE ====================
 cd evaluation-service
 docker build -t evaluation-service .
-docker tag evaluation-service:latest <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/evaluation-service:latest
-docker push <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/evaluation-service:latest
+docker tag evaluation-service:latest 154367514500.dkr.ecr.us-east-1.amazonaws.com/evaluation-service:latest
+docker push 154367514500.dkr.ecr.us-east-1.amazonaws.com/evaluation-service:latest
 cd ..
 
 # ==================== ANALYTICS SERVICE ====================
 cd analytics-service
 docker build -t analytics-service .
-docker tag analytics-service:latest <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/analytics-service:latest
-docker push <SEU_ID_ECR>.dkr.ecr.us-east-1.amazonaws.com/analytics-service:latest
+docker tag analytics-service:latest 154367514500.dkr.ecr.us-east-1.amazonaws.com/analytics-service:latest
+docker push 154367514500.dkr.ecr.us-east-1.amazonaws.com/analytics-service:latest
 cd ..
 ```
 
@@ -478,7 +478,7 @@ aws ec2 authorize-security-group-ingress \
 **Valores reais do cluster:**
 - VPC ID: `vpc-018e2024769475595`
 - VPC CIDR: `172.31.0.0/16`
-- Cluster SG: `sg-01896e6a89310d603`
+- Cluster SG: `sg-0d342c3f6f15cfe3e`
 
 ### 3.7. Instalar Metrics Server (DEPOIS dos nós ativos)
 
@@ -514,7 +514,7 @@ REDIS_TLS: "true"
 ```bash
 # Testar conexão TLS ao Redis
 kubectl run redis-tls-test --rm -i --restart=Never --image=redis:alpine -n togglemaster -- \
-  redis-cli -h togglemaster-cache-nlxlok.serverless.use1.cache.amazonaws.com -p 6379 --tls --insecure PING
+  redis-cli -h togglemaster-cache-6cviqx.serverless.use1.cache.amazonaws.com -p 6379 --tls --insecure PING
 # Deve retornar: PONG
 ```
 
@@ -596,12 +596,12 @@ Os manifestos Kubernetes já estão criados na pasta `k8s/` do projeto com os va
 
 ```
 k8s/
-├── namespace.yaml        # Namespace togglemaster
-├── secrets.yaml          # Secrets com credenciais (Postgres, MasterKey)
-├── configmap.yaml        # Configurações e endpoints
-├── deployments.yaml      # Deployments e Services
-├── ingress.yaml          # Ingress para roteamento
-└── hpa.yaml             # Horizontal Pod Autoscaler
+├── 1-namespace.yaml      # Namespace togglemaster
+├── 2-secrets.yaml        # Secrets com credenciais (Postgres, MasterKey)
+├── 3-configmap.yaml      # Configurações e endpoints
+├── 4-deployments.yaml    # Deployments e Services
+├── 5-ingress.yaml        # Ingress para roteamento
+└── 6-hpa.yaml            # Horizontal Pod Autoscaler
 
 ingress/
 └── ingress-nginx.yaml    # NGINX Ingress Controller completo
@@ -617,14 +617,14 @@ docs/scripts/
 
 | Recurso | Valor |
 |---------|-------|
-| ECR ID | `886833754732` |
-| AUTH_DB_HOST | `togglemaster-auth.c6h7fxfgdm94.us-east-1.rds.amazonaws.com` |
-| FLAG_DB_HOST | `togglemaster-flags.c6h7fxfgdm94.us-east-1.rds.amazonaws.com` |
-| TARGETING_DB_HOST | `togglemaster-targeting.c6h7fxfgdm94.us-east-1.rds.amazonaws.com` |
-| REDIS_HOST | `togglemaster-cache-nlxlok.serverless.use1.cache.amazonaws.com:6379` |
-| SQS_URL | `https://sqs.us-east-1.amazonaws.com/886833754732/togglemaster-analytics-queue` |
+| ECR ID | `154367514500` |
+| AUTH_DB_HOST | `togglemaster-auth.c36kciuseu7k.us-east-1.rds.amazonaws.com` |
+| FLAG_DB_HOST | `togglemaster-flags.c36kciuseu7k.us-east-1.rds.amazonaws.com` |
+| TARGETING_DB_HOST | `togglemaster-targeting.c36kciuseu7k.us-east-1.rds.amazonaws.com` |
+| REDIS_HOST | `togglemaster-cache-6cviqx.serverless.use1.cache.amazonaws.com:6379` |
+| SQS_URL | `https://sqs.us-east-1.amazonaws.com/154367514500/togglemaster-analytics-queue` |
 
-**⚠️ IMPORTANTE:** Se precisar recriar os manifestos, use os modelos abaixo. Substitua `<SEU_ID_ECR>` pelo seu ID da AWS.
+**⚠️ IMPORTANTE:** Se precisar recriar os manifestos, use os modelos abaixo. Substitua `154367514500` pelo seu ID da AWS.
 
 **⚠️ CRÍTICO - nodeSelector para EKS Auto:** Em ambientes AWS Academy, os nós do nodegroup podem ter problemas de DNS. Adicione `nodeSelector` para usar apenas nós EKS Auto:
 
@@ -667,9 +667,9 @@ type: Opaque
 data:
   # Valores em base64
   # Para gerar: echo -n "valor" | base64
-  POSTGRES_USER: cG9zdGdyZXM= # "postgres" - substituir pelo valor real
-  POSTGRES_PASSWORD: dG9nZ2xlbWFzdGVyITEyMzQ= # "togglemaster!1234" - substituir pelo valor real
-  MASTER_KEY: YWRtaW4tc2VjcmV0by0xMjM= # "admin-secreto-123" - substituir pelo valor real
+  POSTGRES_USER: cG9zdGdyZXM= # "postgres"
+  POSTGRES_PASSWORD: VG9nZ2xlbWFzdGVyMTIz # "Togglemaster123"
+  MASTER_KEY: R0Q5LzV4dDluK0h1WXU3c0hVbm40S2RqUVptekRNakRneWVmL2RubXZTbz0= # "GD9/5xt9n+HuYu7sHUnn4KdjQZmzDMjDgyef/dnmvSo="
   # NOTA: Credenciais AWS são armazenadas em secret separado (aws-credentials).
   # Veja a seção "Credenciais AWS para Serviços" para configurar.
 ```
@@ -686,10 +686,12 @@ metadata:
   namespace: togglemaster
 data:
   # Database hosts (RDS)
-  AUTH_DB_HOST: "togglemaster-auth.c6h7fxfgdm94.us-east-1.rds.amazonaws.com"
-  FLAG_DB_HOST: "togglemaster-flags.c6h7fxfgdm94.us-east-1.rds.amazonaws.com"
-  TARGETING_DB_HOST: "togglemaster-targeting.c6h7fxfgdm94.us-east-1.rds.amazonaws.com"
-  REDIS_HOST: "togglemaster-cache-nlxlok.serverless.use1.cache.amazonaws.com:6379"
+  AUTH_DB_HOST: "togglemaster-auth.c36kciuseu7k.us-east-1.rds.amazonaws.com"
+  FLAG_DB_HOST: "togglemaster-flags.c36kciuseu7k.us-east-1.rds.amazonaws.com"
+  TARGETING_DB_HOST: "togglemaster-targeting.c36kciuseu7k.us-east-1.rds.amazonaws.com"
+  REDIS_HOST: "togglemaster-cache-6cviqx.serverless.use1.cache.amazonaws.com:6379"
+  REDIS_TLS: "true"
+  REDIS_URL: "redis://togglemaster-cache-6cviqx.serverless.use1.cache.amazonaws.com:6379"
   # URLs de servicos internos (comunicacao entre microservicos)
   AUTH_SERVICE_URL: "http://auth-service:8001"
   FLAG_SERVICE_URL: "http://flag-service:8002"
@@ -698,16 +700,21 @@ data:
   ANALYTICS_SERVICE_URL: "http://analytics-service:8005"
   # Configuracoes AWS
   AWS_REGION: "us-east-1"
-  AWS_SQS_URL: "https://sqs.us-east-1.amazonaws.com/886833754732/togglemaster-analytics-queue"
+  AWS_SQS_URL: "https://sqs.us-east-1.amazonaws.com/154367514500/togglemaster-analytics-queue"
   AWS_DYNAMODB_TABLE: "ToggleMasterAnalytics"
   # Endpoints AWS (vazio para producao, preencher para LocalStack)
   AWS_SQS_ENDPOINT_URL: ""
   AWS_DYNAMODB_ENDPOINT_URL: ""
+  # Database connection strings (com credenciais embutidas)
+  # ⚠️ Ajuste user/password para seus valores reais
+  AUTH_DATABASE_URL: "postgres://postgres:Togglemaster123@togglemaster-auth.c36kciuseu7k.us-east-1.rds.amazonaws.com:5432/auth_db"
+  FLAG_DATABASE_URL: "postgres://postgres:Togglemaster123@togglemaster-flags.c36kciuseu7k.us-east-1.rds.amazonaws.com:5432/flags_db"
+  TARGETING_DATABASE_URL: "postgres://postgres:Togglemaster123@togglemaster-targeting.c36kciuseu7k.us-east-1.rds.amazonaws.com:5432/targeting_db"
 ```
 
 #### 4-deployments.yaml
 
-**⚠️ IMPORTANTE:** Substitua `886833754732` pelo seu ID da AWS.
+**⚠️ IMPORTANTE:** Seu ID da AWS é `154367514500`.
 
 ```yaml
 # ==========================================
@@ -732,7 +739,7 @@ spec:
         eks.amazonaws.com/compute-type: auto
       containers:
         - name: auth-service
-          image: 886833754732.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
+          image: 154367514500.dkr.ecr.us-east-1.amazonaws.com/auth-service:latest
           ports:
             - containerPort: 8001
           env:
@@ -816,7 +823,7 @@ spec:
         eks.amazonaws.com/compute-type: auto
       containers:
         - name: flag-service
-          image: 886833754732.dkr.ecr.us-east-1.amazonaws.com/flag-service:latest
+          image: 154367514500.dkr.ecr.us-east-1.amazonaws.com/flag-service:latest
           ports:
             - containerPort: 8002
           env:
@@ -898,7 +905,7 @@ spec:
         eks.amazonaws.com/compute-type: auto
       containers:
         - name: targeting-service
-          image: 886833754732.dkr.ecr.us-east-1.amazonaws.com/targeting-service:latest
+          image: 154367514500.dkr.ecr.us-east-1.amazonaws.com/targeting-service:latest
           ports:
             - containerPort: 8003
           env:
@@ -980,7 +987,8 @@ spec:
         eks.amazonaws.com/compute-type: auto
       containers:
         - name: evaluation-service
-          image: 886833754732.dkr.ecr.us-east-1.amazonaws.com/evaluation-service:latest
+          image: 154367514500.dkr.ecr.us-east-1.amazonaws.com/evaluation-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8004
           env:
@@ -992,7 +1000,15 @@ spec:
                   name: app-config
                   key: REDIS_HOST
             - name: REDIS_URL
-              value: "redis://$(REDIS_HOST)"
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: REDIS_URL
+            - name: REDIS_TLS
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: REDIS_TLS
             - name: FLAG_SERVICE_URL
               valueFrom:
                 configMapKeyRef:
@@ -1023,6 +1039,22 @@ spec:
                 secretKeyRef:
                   name: app-secrets
                   key: MASTER_KEY
+            # ⚠️ CRÍTICO: usar secret aws-credentials para SQS
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: AWS_SESSION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_SESSION_TOKEN
           resources:
             requests:
               cpu: "100m"
@@ -1077,12 +1109,13 @@ spec:
         eks.amazonaws.com/compute-type: auto
       containers:
         - name: analytics-service
-          image: 886833754732.dkr.ecr.us-east-1.amazonaws.com/analytics-service:latest
+          image: 154367514500.dkr.ecr.us-east-1.amazonaws.com/analytics-service:latest
+          imagePullPolicy: Always
           ports:
-            - containerPort: 8005
+            - containerPort: 8006
           env:
             - name: PORT
-              value: "8005"
+              value: "8006"
             - name: AWS_REGION
               valueFrom:
                 configMapKeyRef:
@@ -1108,16 +1141,23 @@ spec:
                 configMapKeyRef:
                   name: app-config
                   key: AWS_DYNAMODB_ENDPOINT_URL
+            # ⚠️ CRÍTICO: usar secret aws-credentials (não app-secrets)
+            # Inclui AWS_SESSION_TOKEN obrigatório para AWS Academy
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
-                  name: app-secrets
+                  name: aws-credentials
                   key: AWS_ACCESS_KEY_ID
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: app-secrets
+                  name: aws-credentials
                   key: AWS_SECRET_ACCESS_KEY
+            - name: AWS_SESSION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_SESSION_TOKEN
           resources:
             requests:
               cpu: "100m"
@@ -1125,16 +1165,25 @@ spec:
             limits:
               cpu: "500m"
               memory: "512Mi"
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8006
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 30
           livenessProbe:
             httpGet:
               path: /health
-              port: 8005
-            initialDelaySeconds: 30
+              port: 8006
+            initialDelaySeconds: 60
+            periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /health
-              port: 8005
-            initialDelaySeconds: 10
+              port: 8006
+            initialDelaySeconds: 30
+            periodSeconds: 5
 ---
 apiVersion: v1
 kind: Service
@@ -1146,7 +1195,7 @@ spec:
     app: analytics-service
   ports:
     - port: 8005
-      targetPort: 8005
+      targetPort: 8006  # ⚠️ Container roda na 8006, service expõe na 8005
   type: ClusterIP
 ```
 
@@ -1207,6 +1256,20 @@ spec:
                   number: 8005
 ```
 
+**⚠️ CRÍTICO - Padrão de URL do Ingress (rewrite-target):**
+
+O ingress usa `rewrite-target: /$2` com paths como `/evaluate(/|$)(.*)`. Isso significa que a URL **externa** precisa incluir o **prefixo do serviço + o path real da API**:
+
+| Serviço | URL Externa | Reescrita para |
+|---------|-------------|----------------|
+| Health checks | `http://INGRESS/evaluate/health` | `/health` |
+| Evaluate | `http://INGRESS/evaluate/evaluate?flag_name=X&user_id=Y` | `/evaluate?flag_name=X&user_id=Y` |
+| Flags CRUD | `http://INGRESS/flags/flags` | `/flags` |
+| Auth register | `http://INGRESS/auth/auth/register` | `/auth/register` |
+| Analytics events | `http://INGRESS/analytics/events` | `/events` |
+
+> **Dica:** Para health checks, o path `/evaluate/health` é reescrito para `/health` corretamente. Mas para endpoints que têm o mesmo nome do prefixo do ingress (como `/evaluate`), a URL externa fica com "prefixo duplo": `/evaluate/evaluate`.
+
 #### 6-hpa.yaml
 
 ```yaml
@@ -1257,26 +1320,32 @@ spec:
 # Adicionar tags às subnets e regras de Security Group
 
 # 1. Criar namespace
-kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/1-namespace.yaml
 
 # 2. Criar secrets
-kubectl apply -f k8s/secrets.yaml
+kubectl apply -f k8s/2-secrets.yaml
+
+# 2b. Criar secret de credenciais AWS (ver seção "Credenciais AWS")
+kubectl create secret generic aws-credentials -n togglemaster \
+  --from-literal=AWS_ACCESS_KEY_ID="<SEU_ACCESS_KEY>" \
+  --from-literal=AWS_SECRET_ACCESS_KEY="<SEU_SECRET_KEY>" \
+  --from-literal=AWS_SESSION_TOKEN="<SEU_SESSION_TOKEN>"
 
 # 3. Criar configmap
-kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/3-configmap.yaml
 
 # 4. Criar deployments e services
-kubectl apply -f k8s/deployments.yaml
+kubectl apply -f k8s/4-deployments.yaml
 
 # 5. Criar ingress (pode falhar se webhook não estiver pronto)
-kubectl apply -f k8s/ingress.yaml
+kubectl apply -f k8s/5-ingress.yaml
 
 # Se falhar com erro de webhook, delete o webhook e tente novamente:
 # kubectl delete validatingwebhookconfiguration ingress-nginx-admission
-# kubectl apply -f k8s/ingress.yaml
+# kubectl apply -f k8s/5-ingress.yaml
 
 # 6. Criar HPA
-kubectl apply -f k8s/hpa.yaml
+kubectl apply -f k8s/6-hpa.yaml
 ```
 
 ### 3.13. Verificar Status
@@ -1329,39 +1398,35 @@ curl http://$INGRESS_URL/analytics/health
 ### 4.2. Teste de Integração
 
 ```bash
-# 1. Criar usuário
-curl -X POST http://$INGRESS_URL/auth/register \
+# 1. Criar API Key (usando MASTER_KEY)
+API_KEY=$(curl -s -X POST http://$INGRESS_URL/auth/admin/keys \
   -H "Content-Type: application/json" \
-  -d '{"email":"teste@example.com","password":"123456"}'
+  -H "Authorization: Bearer GD9/5xt9n+HuYu7sHUnn4KdjQZmzDMjDgyef/dnmvSo=" \
+  -d '{"name":"demo-key"}' | jq -r '.key')
 
-# 2. Fazer login
-TOKEN=$(curl -X POST http://$INGRESS_URL/auth/login \
+echo "API Key: $API_KEY"
+
+# 2. Criar feature flag
+curl -X POST http://$INGRESS_URL/flags/flags \
   -H "Content-Type: application/json" \
-  -d '{"email":"teste@example.com","password":"123456"}' \
-  | jq -r '.token')
+  -H "X-API-Key: $API_KEY" \
+  -d '{"name":"dark-mode","description":"Modo escuro","is_enabled":true}'
 
-echo "Token: $TOKEN"
-
-# 3. Criar feature flag
-curl -X POST http://$INGRESS_URL/flags \
+# 3. Criar regra de targeting (50% dos usuários)
+curl -X POST http://$INGRESS_URL/targeting/rules \
   -H "Content-Type: application/json" \
-  -d '{"name":"nova_feature","description":"Teste de nova feature","enabled":true}'
+  -H "X-API-Key: $API_KEY" \
+  -d '{"flag_name":"dark-mode","is_enabled":true,"rules":{"type":"PERCENTAGE","value":50}}'
 
-# 4. Listar flags
-curl http://$INGRESS_URL/flags
+# 4. Avaliar flag (⚠️ Note prefixo duplo: /evaluate/evaluate)
+curl "http://$INGRESS_URL/evaluate/evaluate?flag_name=dark-mode&user_id=user123"
+curl "http://$INGRESS_URL/evaluate/evaluate?flag_name=dark-mode&user_id=user456"
 
-# 5. Avaliar flag
-curl -X POST http://$INGRESS_URL/evaluate \
-  -H "Content-Type: application/json" \
-  -d '{"flagName":"nova_feature","userId":"user123"}'
+# 5. Verificar eventos no analytics (após ~30s de processamento SQS)
+curl "http://$INGRESS_URL/analytics/events"
 
-# 6. Coletar analytics
-curl -X POST http://$INGRESS_URL/analytics \
-  -H "Content-Type: application/json" \
-  -d '{"flagName":"nova_feature","userId":"user123","enabled":true}'
-
-# 7. Ver estatísticas
-curl http://$INGRESS_URL/analytics/stats
+# 6. Verificar DynamoDB diretamente
+aws dynamodb scan --table-name ToggleMasterAnalytics --region us-east-1 --max-items 5
 ```
 
 ### 4.3. Teste de Escalabilidade (HPA)
@@ -1378,9 +1443,15 @@ kubectl get hpa -n togglemaster -w
 # Terminal 2: Monitorar pods
 kubectl get pods -n togglemaster -w
 
-# Terminal 3: Gerar carga
+# Terminal 3: Gerar carga (⚠️ Note prefixo duplo na URL)
 INGRESS_URL=$(kubectl get ingress togglemaster-ingress -n togglemaster -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-hey -z 5m -c 50 http://$INGRESS_URL/evaluate
+hey -z 3m -c 100 -q 200 "http://$INGRESS_URL/evaluate/evaluate?flag_name=dark-mode&user_id=loadtest"
+
+# Resultados esperados (obtidos em teste real):
+# - ~6000+ requests em 3 minutos
+# - 100% HTTP 200
+# - ~0.87s latência média
+# - ~113 req/s throughput
 
 # Observe:
 # - O HPA detectar o aumento de CPU
@@ -1395,6 +1466,13 @@ hey -z 5m -c 50 http://$INGRESS_URL/evaluate
 ### Roteiro Sugerido (8-12 minutos)
 
 #### 1. Introdução (1 minuto)
+"Olá, meu nome é Vinicius Fonseca."
+Projeto: ToggleMaster — Sistema de Feature Flags
+O que vou explicar:
+Escalabilidade automática com HPA no evaluation-service
+Fluxo de mensageria e analytics via SQS entre evaluation-service e analytics-service
+Diferenciação de persistência: RDS (PostgreSQL), Redis (ElastiCache) e DynamoDB
+
 
 - Apresentação pessoal
 - Nome do projeto: **ToggleMaster**
@@ -1915,48 +1993,85 @@ Não foi possível conectar ao Redis: context deadline exceeded
 
 **Testar se é problema de TLS:**
 ```bash
-# Testar SEM TLS (vai falhar/hang)
-kubectl run redis-test --rm -i --restart=Never --image=redis:alpine -n togglemaster -- \
-  redis-cli -h togglemaster-cache-nlxlok.serverless.use1.cache.amazonaws.com -p 6379 PING
-
 # Testar COM TLS (deve retornar PONG)
 kubectl run redis-tls-test --rm -i --restart=Never --image=redis:alpine -n togglemaster -- \
-  redis-cli -h togglemaster-cache-nlxlok.serverless.use1.cache.amazonaws.com -p 6379 --tls --insecure PING
+  redis-cli -h togglemaster-cache-6cviqx.serverless.use1.cache.amazonaws.com -p 6379 --tls --insecure PING
 ```
 
-**Solução:** Adicionar configuração de TLS no ConfigMap e no código:
+**Solução:** Adicionar `REDIS_TLS: "true"` e `REDIS_URL` no ConfigMap.
 
-1. **Atualizar ConfigMap** (`k8s/configmap.yaml`):
+### Problema 11: flag-service / targeting-service retorna 503 (AUTH_SERVICE_URL)
+
+**Erro no evaluation-service:**
+```
+flag-service retornou status 503
+```
+
+**Causa:** O `flag-service` e `targeting-service` usam a variável `AUTH_SERVICE_URL` para validar tokens. Se essa variável **não estiver definida**, os serviços fazem fallback para `http://auth-app:8001` (nome do Docker Compose), que **não existe no Kubernetes**.
+
+**Solução:** Garantir que `AUTH_SERVICE_URL` está configurado nos deployments do flag-service e targeting-service:
 ```yaml
-REDIS_HOST: "togglemaster-cache-nlxlok.serverless.use1.cache.amazonaws.com:6379"
-REDIS_TLS: "true"
+- name: AUTH_SERVICE_URL
+  valueFrom:
+    configMapKeyRef:
+      name: app-config
+      key: AUTH_SERVICE_URL  # = "http://auth-service:8001"
 ```
 
-2. **Aplicar ConfigMap:**
-```bash
-kubectl apply -f k8s/configmap.yaml
+### Problema 12: DynamoDB - Missing key requestId
+
+**Erro no analytics-service:**
+```
+Missing the key requestId in the item
 ```
 
-3. **Reconstruir e fazer push da imagem do evaluation-service** com suporte a TLS.
+**Causa:** O código do `analytics-service` (app.py) usava `event_id` como chave do DynamoDB, mas a tabela foi criada com partition key `requestId`.
 
-4. **Reiniciar o deployment:**
+**Solução:** No `app.py` do analytics-service, alterar a chave do item de `event_id` para `requestId`:
+```python
+# Em process_message():
+item = {
+    'requestId': {'S': event_id},  # ← era 'event_id', deve ser 'requestId'
+    'user_id': {'S': body['user_id']},
+    ...
+}
+```
+Após a correção, rebuild e push da imagem:
 ```bash
-kubectl rollout restart deployment/evaluation-service -n togglemaster
+cd backend-services/analytics-service
+docker build -t analytics-service .
+docker tag analytics-service:latest <ECR>/analytics-service:latest
+docker push <ECR>/analytics-service:latest
+kubectl rollout restart deployment/analytics-service -n togglemaster
+```
+
+### Problema 13: imagePullPolicy IfNotPresent impede atualização
+
+**Sintoma:** Após rebuild e push de nova imagem para o ECR, o pod continua usando a imagem antiga.
+
+**Causa:** `imagePullPolicy: IfNotPresent` nos manifests não baixa a imagem nova se já existe uma com tag `:latest` no cache do nó.
+
+**Solução:** Usar `imagePullPolicy: Always` ou fazer patch:
+```bash
+kubectl patch deployment analytics-service -n togglemaster --type=json \
+  -p='[{"op":"replace","path":"/spec/template/spec/containers/0/imagePullPolicy","value":"Always"}]'
+kubectl rollout restart deployment/analytics-service -n togglemaster
 ```
 
 ---
 
 ## 📋 Valores Reais do Deploy (Referência)
 
+> **⚠️ NOTA:** Estes valores são do deploy mais recente. Em AWS Academy, o Account ID pode mudar entre sessões de lab. Os endpoints RDS, ElastiCache e SQS também podem precisar ser recriados.
+
 ### IDs e Endpoints do Cluster Atual
 
 | Recurso | Valor |
 |---------|-------|
-| **AWS Account ID** | `886833754732` |
-| **VPC ID** | `vpc-018e2024769475595` |
+| **AWS Account ID** | `154367514500` |
+| **VPC ID** | `vpc-0ac4e0e3d4d74e844` |
 | **VPC CIDR** | `172.31.0.0/16` |
-| **Cluster Security Group** | `sg-01896e6a89310d603` |
-| **Default Security Group** | `sg-0c97beab8695d3849` |
+| **ECR Registry** | `154367514500.dkr.ecr.us-east-1.amazonaws.com` |
 
 ### Subnets
 
@@ -1972,18 +2087,17 @@ kubectl rollout restart deployment/evaluation-service -n togglemaster
 
 | Banco | Endpoint |
 |-------|----------|
-| auth-db | `togglemaster-auth.c6h7fxfgdm94.us-east-1.rds.amazonaws.com` |
-| flags-db | `togglemaster-flags.c6h7fxfgdm94.us-east-1.rds.amazonaws.com` |
-| targeting-db | `togglemaster-targeting.c6h7fxfgdm94.us-east-1.rds.amazonaws.com` |
+| auth-db | `togglemaster-auth.c36kciuseu7k.us-east-1.rds.amazonaws.com` |
+| flags-db | `togglemaster-flags.c36kciuseu7k.us-east-1.rds.amazonaws.com` |
+| targeting-db | `togglemaster-targeting.c36kciuseu7k.us-east-1.rds.amazonaws.com` |
 
 ### Outros Endpoints
 
 | Recurso | Endpoint |
 |---------|----------|
-| Redis | `togglemaster-cache-nlxlok.serverless.use1.cache.amazonaws.com:6379` |
-| SQS | `https://sqs.us-east-1.amazonaws.com/886833754732/togglemaster-analytics-queue` |
-| DynamoDB Table | `ToggleMasterAnalytics` |
-| LoadBalancer NLB | `k8s-ingressn-ingressn-4b2dffb93b-3e52bb9ba052b281.elb.us-east-1.amazonaws.com` |
+| Redis (TLS) | `togglemaster-cache-6cviqx.serverless.use1.cache.amazonaws.com:6379` |
+| SQS | `https://sqs.us-east-1.amazonaws.com/154367514500/togglemaster-analytics-queue` |
+| DynamoDB Table | `ToggleMasterAnalytics` (Partition Key: `requestId`) |
 
 ### Nós do Cluster
 
@@ -2102,12 +2216,12 @@ kubectl patch deployment ingress-nginx-controller -n ingress-nginx --type=json \
 # ============================================
 # 3. DEPLOY DA APLICAÇÃO
 # ============================================
-kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/secrets.yaml
-kubectl apply -f k8s/configmap.yaml
-kubectl apply -f k8s/deployments.yaml
-kubectl apply -f k8s/ingress.yaml
-kubectl apply -f k8s/hpa.yaml
+kubectl apply -f k8s/1-namespace.yaml
+kubectl apply -f k8s/2-secrets.yaml
+kubectl apply -f k8s/3-configmap.yaml
+kubectl apply -f k8s/4-deployments.yaml
+kubectl apply -f k8s/5-ingress.yaml
+kubectl apply -f k8s/6-hpa.yaml
 
 # ============================================
 # 4. CONFIGURAR CREDENCIAIS AWS (AWS Academy)
