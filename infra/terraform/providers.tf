@@ -9,7 +9,6 @@ terraform {
     bucket       = "556939139551-togglemaster-tfstate"
     key          = "techchallenger/fase3/terraform.tfstate"
     region       = "us-east-1"
-    use_lockfile = true
     encrypt      = true
   }
 }
