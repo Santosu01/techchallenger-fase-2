@@ -1,0 +1,26 @@
+name: Evaluation Service CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend-services/evaluation-service/**"
+      - ".github/workflows/evaluation-service-ci.yml"
+      - ".github/workflows/service-ci-base.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend-services/evaluation-service/**"
+      - ".github/workflows/evaluation-service-ci.yml"
+      - ".github/workflows/service-ci-base.yml"
+
+jobs:
+  evaluation_service_ci:
+    uses: ./.github/workflows/service-ci-base.yml
+    with:
+      service_name: evaluation-service
+      service_path: backend-services/evaluation-service
+      language: go
+      image_name: evaluation-service
+      trivy_fail_on_critical: true
+    secrets: inherit

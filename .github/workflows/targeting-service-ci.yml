@@ -1,0 +1,26 @@
+name: Targeting Service CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend-services/targeting-service/**"
+      - ".github/workflows/targeting-service-ci.yml"
+      - ".github/workflows/service-ci-base.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend-services/targeting-service/**"
+      - ".github/workflows/targeting-service-ci.yml"
+      - ".github/workflows/service-ci-base.yml"
+
+jobs:
+  targeting_service_ci:
+    uses: ./.github/workflows/service-ci-base.yml
+    with:
+      service_name: targeting-service
+      service_path: backend-services/targeting-service
+      language: python
+      image_name: targeting-service
+      trivy_fail_on_critical: true
+    secrets: inherit

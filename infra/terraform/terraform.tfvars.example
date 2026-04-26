@@ -1,0 +1,45 @@
+project_name  = "togglemaster"
+environment   = "homolog"
+aws_region    = "us-east-1"
+aws_profile   = ""
+
+vpc_cidr             = "10.20.0.0/16"
+availability_zones   = ["us-east-1a", "us-east-1b"]
+public_subnet_cidrs  = ["10.20.1.0/24", "10.20.2.0/24"]
+private_subnet_cidrs = ["10.20.11.0/24", "10.20.12.0/24"]
+enable_nat_gateway   = true
+
+eks_cluster_name    = "togglemaster-eks"
+eks_cluster_version = "1.29"
+
+# AWS Academy (valores validados da sua conta):
+eks_cluster_role_arn = "arn:aws:iam::556939139551:role/c208526a5300486l14867713t1w556939-LabEksClusterRole-2AFY32J2abPo"
+eks_node_role_arn    = "arn:aws:iam::556939139551:role/c208526a5300486l14867713t1w556939139-LabEksNodeRole-HKbXTIoFsL6x"
+
+node_instance_types = ["t3.small"]
+node_desired_size   = 2
+node_min_size       = 1
+node_max_size       = 4
+
+rds_instance_class    = "db.t3.micro"
+rds_allocated_storage = 20
+rds_master_username   = "postgres"
+rds_master_password   = "CHANGE_ME_SECURE_PASSWORD"
+
+redis_node_type       = "cache.t3.micro"
+redis_num_cache_nodes = 1
+
+dynamodb_table_name      = "ToggleMasterAnalytics"
+analytics_sqs_queue_name = "togglemaster-analytics-queue"
+
+ecr_repositories = [
+  "auth-service",
+  "flag-service",
+  "targeting-service",
+  "evaluation-service",
+  "analytics-service"
+]
+
+tags = {
+  Squad = "techchallenge"
+}
