@@ -45,6 +45,11 @@ func main() {
 	}
 	defer db.Close()
 
+	// --- Executar Migrações ---
+	if err := runMigrations(db); err != nil {
+		log.Fatalf("Erro ao executar migrações: %v", err)
+	}
+
 	app := &App{
 		DB:         db,
 		MasterKey:  masterKey,
@@ -107,4 +112,26 @@ func connectDB(databaseURL string) (*sql.DB, error) {
 	}
 
 	return nil, fmt.Errorf("após 5 tentativas, não foi possível conectar ao banco de dados: %v", err)
+}
+
+// runMigrations executa as migrações necessárias no banco de dados
+func runMigrations(db *sql.DB) error {
+	// Criar tabela api_keys se não existir (mesma estrutura do db/init.sql)
+	createTableSQL := `
+	CREATE TABLE IF NOT EXISTS api_keys (
+		id SERIAL PRIMARY KEY,
+		name VARCHAR(100) NOT NULL,
+		key_hash VARCHAR(64) NOT NULL UNIQUE,
+		is_active BOOLEAN DEFAULT true,
+		created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+	);
+	`
+
+	_, err := db.Exec(createTableSQL)
+	if err != nil {
+		return fmt.Errorf("erro ao criar tabela api_keys: %v", err)
+	}
+
+	log.Println("Migração executada com sucesso! Tabela api_keys verificada.")
+	return nil
 }

@@ -9,6 +9,7 @@ services:
   evaluation-app:
     build:
       context: .
+    container_name: evaluation-app
     networks:
       - infra-net
       - service-backbone

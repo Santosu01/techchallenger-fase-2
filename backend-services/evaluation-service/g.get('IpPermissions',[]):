@@ -1,0 +1,58 @@
+{
+    "GroupId": "sg-0d342c3f6f15cfe3e",
+    "GroupName": "eks-cluster-sg-togglemaster-cluster-1612712477",
+    "VpcId": "vpc-0ac4e0e3d4d74e844",
+    "InboundRules": [
+        {
+            "IpProtocol": "-1",
+            "UserIdGroupPairs": [
+                {
+                    "Description": "Allows EFA traffic, which is not matched by CIDR rules.",
+                    "UserId": "154367514500",
+                    "GroupId": "sg-0d342c3f6f15cfe3e"
+                }
+            ],
+            "IpRanges": [
+                {
+                    "CidrIp": "172.31.0.0/16"
+                }
+            ],
+            "Ipv6Ranges": [],
+            "PrefixListIds": []
+        },
+        {
+            "IpProtocol": "tcp",
+            "FromPort": 80,
+            "ToPort": 443,
+            "UserIdGroupPairs": [
+                {
+                    "Description": "eks.amazonaws.com/targetGroupBinding=shared",
+                    "UserId": "154367514500",
+                    "GroupId": "sg-042ad862218652a77"
+                }
+            ],
+            "IpRanges": [],
+            "Ipv6Ranges": [],
+            "PrefixListIds": []
+        }
+    ],
+    "OutboundRules": [
+        {
+            "IpProtocol": "-1",
+            "UserIdGroupPairs": [
+                {
+                    "Description": "Allows EFA traffic, which is not matched by CIDR rules.",
+                    "UserId": "154367514500",
+                    "GroupId": "sg-0d342c3f6f15cfe3e"
+                }
+            ],
+            "IpRanges": [
+                {
+                    "CidrIp": "0.0.0.0/0"
+                }
+            ],
+            "Ipv6Ranges": [],
+            "PrefixListIds": []
+        }
+    ]
+}

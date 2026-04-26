@@ -5,10 +5,10 @@
 # EDITE AS VARIAVEIS ABAIXO:
 
 # AWS Access Key ID
-AWS_ACCESS_KEY_ID="AKIAIOSFODNN7EXAMPLE"
+AWS_ACCESS_KEY_ID="SUA_CHAVE_AQUI"
 
 # AWS Secret Access Key
-AWS_SECRET_ACCESS_KEY="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+AWS_SECRET_ACCESS_KEY="SUA_CHAVE_AQUI"
 
 # AWS Session Token (OBRIGATÓRIO para credenciais temporárias/federation/SSO)
 # Deixe em branco se usa access key permanente

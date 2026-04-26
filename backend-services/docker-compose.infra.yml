@@ -30,30 +30,28 @@ services:
     environment:
       - SERVICES=sqs
       - DEFAULT_REGION=us-east-1
+      - AWS_DEFAULT_REGION=us-east-1
     volumes:
       - ./infra/localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
     healthcheck:
-      test: ["CMD-SHELL", "awslocal --version"]
+      test: ["CMD-SHELL", "curl -s http://localhost:4566/_localstack/health || exit 1"]
       interval: 10s
-      timeout: 5s
-      retries: 5
+      timeout: 10s
+      retries: 10
 
   shared-dynamodb:
     image: amazon/dynamodb-local
     container_name: shared-dynamodb
     networks:
       - infra-net
+      - service-backbone
     ports:
       - "8000:8000"
     command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
     volumes:
       - ./infra/dynamodb:/home/dynamodblocal/data
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "timeout 1s bash -c ':> /dev/tcp/127.0.0.1/8000' || exit 1",
-        ]
+      test: ["CMD-SHELL", "echo | nc localhost 8000 || exit 0"]
       interval: 10s
       timeout: 5s
       retries: 5
