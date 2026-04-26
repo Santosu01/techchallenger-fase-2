@@ -17,6 +17,7 @@ eks_cluster_role_arn = "arn:aws:iam::556939139551:role/c208526a5300486l14867713t
 eks_node_role_arn    = "arn:aws:iam::556939139551:role/c208526a5300486l14867713t1w556939139-LabEksNodeRole-HKbXTIoFsL6x"
 
 node_instance_types = ["t3.small"]
+node_ami_type       = "AL2023_x86_64_STANDARD"
 node_desired_size   = 2
 node_min_size       = 1
 node_max_size       = 4

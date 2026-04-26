@@ -20,6 +20,7 @@ resource "aws_eks_node_group" "default" {
   node_role_arn   = var.node_role_arn
   subnet_ids      = var.subnet_ids
   instance_types  = var.instance_types
+  ami_type        = var.ami_type
 
   scaling_config {
     desired_size = var.desired_size

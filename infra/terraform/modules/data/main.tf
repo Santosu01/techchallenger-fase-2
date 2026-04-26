@@ -44,7 +44,6 @@ resource "aws_db_instance" "postgres" {
 
   identifier             = "${var.project_name}-${var.environment}-${each.key}-db"
   engine                 = "postgres"
-  engine_version         = "15.7"
   instance_class         = var.rds_instance_class
   allocated_storage      = var.rds_allocated_storage
   db_name                = replace(each.value, "-", "_")
