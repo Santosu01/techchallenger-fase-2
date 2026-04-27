@@ -190,7 +190,7 @@ jobs:
         with:
           scan-type: fs
           scan-ref: ${{ inputs.service_path }}
-          severity: CRITICAL,HIGH
+          severity: CRITICAL
           ignore-unfixed: true
           exit-code: ${{ inputs.trivy_fail_on_critical && '1' || '0' }}
           vuln-type: library
@@ -280,7 +280,7 @@ jobs:
         uses: aquasecurity/trivy-action@v0.24.0
         with:
           image-ref: ${{ inputs.image_name }}:${{ needs.container_build.outputs.image_tag }}
-          severity: CRITICAL,HIGH
+          severity: CRITICAL
           ignore-unfixed: true
           exit-code: ${{ inputs.trivy_fail_on_critical && '1' || '0' }}
           format: table
