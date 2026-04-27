@@ -2,13 +2,13 @@ name: Analytics Service CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, Tech-Fase3]
     paths:
       - "backend-services/analytics-service/**"
       - ".github/workflows/analytics-service-ci.yml"
       - ".github/workflows/service-ci-base.yml"
   push:
-    branches: [main]
+    branches: [main, Tech-Fase3]
     paths:
       - "backend-services/analytics-service/**"
       - ".github/workflows/analytics-service-ci.yml"

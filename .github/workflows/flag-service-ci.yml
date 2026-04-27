@@ -2,13 +2,13 @@ name: Flag Service CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, Tech-Fase3]
     paths:
       - "backend-services/flag-service/**"
       - ".github/workflows/flag-service-ci.yml"
       - ".github/workflows/service-ci-base.yml"
   push:
-    branches: [main]
+    branches: [main, Tech-Fase3]
     paths:
       - "backend-services/flag-service/**"
       - ".github/workflows/flag-service-ci.yml"
