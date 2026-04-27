@@ -1,5 +1,4 @@
 name: Reusable Service CI
-
 on:
   workflow_call:
     inputs:
