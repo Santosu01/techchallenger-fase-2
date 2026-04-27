@@ -88,7 +88,7 @@ func main() {
 	// Configura TLS ANTES de criar o cliente
 	if redisTLS {
 		opts.TLSConfig = &tls.Config{
-			InsecureSkipVerify: true, // Necessário para ElastiCache Serverless
+			MinVersion: tls.VersionTLS12,
 		}
 		log.Println("TLS habilitado para conexão Redis")
 	}
@@ -205,15 +205,20 @@ func ensureServiceKey() {
 		log.Fatal("Erro fatal: Não foi possível obter SERVICE_API_KEY após várias tentativas. Verifique se o auth-service está saudável.")
 	}
 
-	os.Setenv("SERVICE_API_KEY", generatedKey)
+	if err := os.Setenv("SERVICE_API_KEY", generatedKey); err != nil {
+		log.Fatalf("Erro ao configurar SERVICE_API_KEY no ambiente: %v", err)
+	}
 	log.Println("SERVICE_API_KEY obtida e configurada com sucesso!")
 }
 
 func requestNewKey(client *http.Client, authURL, masterKey string) (string, error) {
 	url := authURL + "/admin/keys"
-	body, _ := json.Marshal(map[string]string{"name": "evaluation-service-auto"})
+	body, err := json.Marshal(map[string]string{"name": "evaluation-service-auto"})
+	if err != nil {
+		return "", fmt.Errorf("erro ao serializar payload para auth-service: %w", err)
+	}
 	
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body)) // #nosec G107 -- URL interna controlada por ambiente do serviço
 	if err != nil {
 		return "", err
 	}
