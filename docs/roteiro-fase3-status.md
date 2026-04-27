@@ -75,3 +75,7 @@ Observacao:
 - [ ] Habilitar autosync (prune/self-heal)
 - [ ] Integrar CI para atualizar tag no GitOps
 - [ ] Validar sync automatico ponta a ponta
+
+## Nota de Execucao
+
+- Atualizacao de rotina para disparar nova rodada de pipelines no CI.
