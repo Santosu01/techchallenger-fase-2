@@ -218,14 +218,14 @@ func requestNewKey(client *http.Client, authURL, masterKey string) (string, erro
 		return "", fmt.Errorf("erro ao serializar payload para auth-service: %w", err)
 	}
 	
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body)) // #nosec G107 -- URL interna controlada por ambiente do serviço
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body)) // #nosec G107,G704 -- URL interna controlada por ambiente do serviço
 	if err != nil {
 		return "", err
 	}
 	req.Header.Set("Authorization", "Bearer "+masterKey)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := client.Do(req)
+	resp, err := client.Do(req) // #nosec G704 -- destino restrito ao auth-service interno
 	if err != nil {
 		return "", err
 	}
