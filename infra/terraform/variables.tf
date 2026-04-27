@@ -80,6 +80,12 @@ variable "node_instance_types" {
   default     = ["t3.small"]
 }
 
+variable "node_ami_type" {
+  type        = string
+  description = "AMI type do EKS node group."
+  default     = "AL2023_x86_64_STANDARD"
+}
+
 variable "node_desired_size" {
   type        = number
   default     = 2

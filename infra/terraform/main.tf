@@ -33,6 +33,7 @@ module "eks" {
   node_role_arn        = var.eks_node_role_arn
   subnet_ids           = module.network.private_subnet_ids
   instance_types       = var.node_instance_types
+  ami_type             = var.node_ami_type
   desired_size         = var.node_desired_size
   min_size             = var.node_min_size
   max_size             = var.node_max_size

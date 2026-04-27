@@ -30,6 +30,10 @@ variable "instance_types" {
   type = list(string)
 }
 
+variable "ami_type" {
+  type = string
+}
+
 variable "desired_size" {
   type = number
 }

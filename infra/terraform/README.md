@@ -31,6 +31,7 @@ Crie esse bucket manualmente na conta `556939139551`, regiao `us-east-1`, antes 
 
 1. Copie `terraform.tfvars.example` para `terraform.tfvars`.
 2. Ajuste os valores de ambiente, subnets, ARNs e tamanho dos recursos.
+   - Para `rds_master_password`, evite os caracteres proibidos no RDS: `/`, `@`, `"`, espaco.
 3. Confirme o backend em `providers.tf` (bucket/key/region) se precisar de outro ambiente.
 4. Rode:
 

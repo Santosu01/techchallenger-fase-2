@@ -59,6 +59,12 @@ Sem esses secrets, o pipeline executa build/lint/scans, mas o push no ECR e pula
 
 Use uma senha forte em `terraform.tfvars` (arquivo local, listado no `.gitignore`). Nao coloque senha em issue/PR; compartilhe apenas pelo canal seguro do grupo se necessario.
 
+Regras importantes do RDS para senha (`MasterUserPassword`):
+
+- Nao pode conter: `/`, `@`, `"`, espaco
+- Deve usar apenas caracteres ASCII imprimiveis permitidos
+- Exemplo valido: `Togglemaster#1234`
+
 ## 5) Economia de creditos (Academy)
 
 - Preferir ambiente efemero: subir para teste/demonstracao e destruir ao fim.
