@@ -41,6 +41,26 @@ jobs:
       - name: Terraform init
         run: terraform init
 
+      - name: Pre-clean ECR images
+        shell: bash
+        run: |
+          set +e
+          REPOS=$(aws ecr describe-repositories --region "${{ secrets.AWS_REGION }}" --query "repositories[?contains(repositoryName, 'service')].repositoryName" --output text 2>/dev/null)
+          if [ -z "$REPOS" ]; then
+            echo "No ECR repositories found to clean."
+            exit 0
+          fi
+
+          for repo in $REPOS; do
+            echo "Cleaning ECR repository: $repo"
+            IMAGE_IDS=$(aws ecr list-images --region "${{ secrets.AWS_REGION }}" --repository-name "$repo" --query "imageIds[*]" --output json 2>/dev/null)
+            if [ -n "$IMAGE_IDS" ] && [ "$IMAGE_IDS" != "[]" ]; then
+              aws ecr batch-delete-image --region "${{ secrets.AWS_REGION }}" --repository-name "$repo" --image-ids "$IMAGE_IDS" || true
+            else
+              echo "Repository $repo already empty."
+            fi
+          done
+
       - name: Terraform destroy
         run: terraform destroy -auto-approve -input=false
 
