@@ -117,7 +117,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install flake8 -r requirements.txt
-          flake8 .
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
   sast:
     name: SAST - ${{ inputs.service_name }}
@@ -154,7 +154,7 @@ jobs:
         if: inputs.language == 'python'
         run: |
           pip install bandit
-          bandit -r . -ll
+          bandit -r . -lll
 
   sca_fs:
     name: SCA (Filesystem) - ${{ inputs.service_name }}
