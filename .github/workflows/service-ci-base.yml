@@ -196,7 +196,9 @@ jobs:
     name: SonarCloud - ${{ inputs.service_name }}
     runs-on: ubuntu-latest
     needs: [build_test, lint]
-    if: ${{ inputs.sonar_enabled && inputs.sonar_project_key != '' && inputs.sonar_organization != '' && secrets.SONAR_TOKEN != '' }}
+    if: ${{ inputs.sonar_enabled && inputs.sonar_project_key != '' && inputs.sonar_organization != '' }}
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     defaults:
       run:
         working-directory: ${{ inputs.service_path }}
@@ -207,15 +209,20 @@ jobs:
           fetch-depth: 0
 
       - name: SonarCloud Scan
+        if: ${{ env.SONAR_TOKEN != '' }}
         uses: SonarSource/sonarqube-scan-action@v5
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
         with:
           projectBaseDir: ${{ inputs.service_path }}
           args: >
             -Dsonar.projectKey=${{ inputs.sonar_project_key }}
             -Dsonar.organization=${{ inputs.sonar_organization }}
+
+      - name: Sonar skipped message
+        if: ${{ env.SONAR_TOKEN == '' }}
+        run: echo "SONAR_TOKEN not configured. SonarCloud step skipped."
 
   container_build:
     name: Container Build - ${{ inputs.service_name }}
