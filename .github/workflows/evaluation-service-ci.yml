@@ -1,6 +1,7 @@
 name: Evaluation Service CI
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [main, Tech-Fase3]
     paths:
