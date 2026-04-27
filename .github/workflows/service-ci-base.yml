@@ -19,7 +19,7 @@ on:
       go_version:
         required: false
         type: string
-        default: "1.22"
+        default: "1.23"
       image_name:
         required: true
         type: string
@@ -80,6 +80,7 @@ jobs:
       - name: Build/Test Go
         if: inputs.language == 'go'
         run: |
+          go mod tidy
           go mod download
           go test ./... -v
 
@@ -121,6 +122,8 @@ jobs:
 
       - name: GolangCI-Lint
         if: inputs.language == 'go'
+        env:
+          GOFLAGS: -mod=mod
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.59
@@ -160,6 +163,7 @@ jobs:
       - name: Gosec (SAST)
         if: inputs.language == 'go'
         run: |
+          go mod tidy
           go install github.com/securego/gosec/v2/cmd/gosec@latest
           export PATH="$PATH:$(go env GOPATH)/bin"
           gosec -severity high -confidence medium ./...
