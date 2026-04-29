@@ -86,6 +86,40 @@ Este roteiro segue os requisitos oficiais do Tech Challenge e marca com check tu
 
 ---
 
+## Epico 4 (Estudo) - Observabilidade e Seguranca em Runtime
+**Status geral:** Nao iniciado
+
+### Objetivo do epico
+- [ ] Adicionar visibilidade operacional e deteccao de ameacas em runtime no cluster EKS
+- [ ] Consolidar aprendizado pratico de seguranca cloud-native apos GitOps
+
+### Escopo sugerido (modo estudo)
+- [ ] Opcao A (recomendada para estudo): Falco (open source) para deteccao em runtime
+- [ ] Opcao B (comparativo de mercado): Sysdig (trial/SaaS), se disponivel
+- [ ] Dashboards basicos de saude do cluster e workloads (CPU/Memoria/Restart/Erros)
+- [ ] Regras iniciais de deteccao para eventos suspeitos em containers
+- [ ] Alertas enviados para canal de notificacao (Slack/Webhook)
+
+### Cenarios minimos para validacao
+- [ ] Simular execucao de shell interativo em container e registrar alerta
+- [ ] Simular pod com privilegio elevado e registrar alerta
+- [ ] Simular comportamento anomalo simples (ex: acesso inesperado a binarios sensiveis)
+- [ ] Evidenciar trilha de investigacao do incidente (evento -> alerta -> acao)
+
+### Entregaveis do epico
+- [ ] Guia de instalacao e operacao (`docs/epico4-runtime-security-operacao.md`)
+- [ ] Evidencias (prints/logs) de pelo menos 3 deteccoes disparadas
+- [ ] Tabela curta de tuning: falso positivo, ajuste aplicado e resultado
+- [ ] Comparativo breve Falco x Sysdig para contexto academico
+
+### Criterios de pronto
+- [ ] Stack de deteccao em runtime ativa no EKS
+- [ ] Pelo menos 3 regras relevantes validadas com evidencias
+- [ ] Alertas chegando no canal definido
+- [ ] Runbook simples de resposta documentado
+
+---
+
 ## Entregaveis finais da Fase 3
 
 ### 1) Video de demonstracao (ate 20 min)
