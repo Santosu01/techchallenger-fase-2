@@ -1,15 +1,8 @@
 name: Evaluation Service CI
 
 on:
-  workflow_dispatch:
-  pull_request:
-    branches: [main, Tech-Fase3]
-    paths:
-      - "backend-services/evaluation-service/**"
-      - ".github/workflows/evaluation-service-ci.yml"
-      - ".github/workflows/service-ci-base.yml"
   push:
-    branches: [main, Tech-Fase3]
+    branches: [main]
     paths:
       - "backend-services/evaluation-service/**"
       - ".github/workflows/evaluation-service-ci.yml"
