@@ -16,7 +16,7 @@ COPY . .
 RUN go mod tidy && CGO_ENABLED=0 GOOS=linux go build -o main .
 
 # Stage 2: Run
-FROM alpine:3.11
+FROM alpine:3.19
 
 WORKDIR /app
 
