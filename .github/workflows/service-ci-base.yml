@@ -330,7 +330,9 @@ jobs:
         run: |
           ECR_URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.image_name }}
           docker tag ${{ inputs.image_name }}:${{ needs.container_build.outputs.image_tag }} $ECR_URI:${{ needs.container_build.outputs.image_tag }}
+          docker tag ${{ inputs.image_name }}:${{ needs.container_build.outputs.image_tag }} $ECR_URI:latest
           docker push $ECR_URI:${{ needs.container_build.outputs.image_tag }}
+          docker push $ECR_URI:latest
 
       - name: ECR push skipped message
         if: ${{ !(env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != '' && env.AWS_REGION != '' && env.AWS_ACCOUNT_ID != '') }}
