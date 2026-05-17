@@ -1,0 +1,20 @@
+name: Auth Service CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend-services/auth-service/**"
+      - ".github/workflows/auth-service-ci.yml"
+      - ".github/workflows/service-ci-base.yml"
+
+jobs:
+  auth_service_ci:
+    uses: ./.github/workflows/service-ci-base.yml
+    with:
+      service_name: auth-service
+      service_path: backend-services/auth-service
+      language: go
+      image_name: auth-service
+      trivy_fail_on_critical: true
+    secrets: inherit

@@ -76,22 +76,24 @@ func main() {
 	// Configura TLS (necessário para ElastiCache Serverless)
 	redisTLS := os.Getenv("REDIS_TLS") == "true"
 
-	rdb := redis.NewClient(&redis.Options{
+	opts := &redis.Options{
 		Addr:         redisHost,
-		DialTimeout:  5 * time.Second,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
-		PoolTimeout:  10 * time.Second,
+		DialTimeout:  30 * time.Second,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		PoolTimeout:  30 * time.Second,
 		PoolSize:     10,
-	})
+	}
 
-	// Habilita TLS se configurado
+	// Configura TLS ANTES de criar o cliente
 	if redisTLS {
-		rdb.Options().TLSConfig = &tls.Config{
-			InsecureSkipVerify: true, // Necessário para ElastiCache Serverless
+		opts.TLSConfig = &tls.Config{
+			MinVersion: tls.VersionTLS12,
 		}
 		log.Println("TLS habilitado para conexão Redis")
 	}
+
+	rdb := redis.NewClient(opts)
 
 	// Verifica conexão com Redis
 	pingCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -203,22 +205,27 @@ func ensureServiceKey() {
 		log.Fatal("Erro fatal: Não foi possível obter SERVICE_API_KEY após várias tentativas. Verifique se o auth-service está saudável.")
 	}
 
-	os.Setenv("SERVICE_API_KEY", generatedKey)
+	if err := os.Setenv("SERVICE_API_KEY", generatedKey); err != nil {
+		log.Fatalf("Erro ao configurar SERVICE_API_KEY no ambiente: %v", err)
+	}
 	log.Println("SERVICE_API_KEY obtida e configurada com sucesso!")
 }
 
 func requestNewKey(client *http.Client, authURL, masterKey string) (string, error) {
 	url := authURL + "/admin/keys"
-	body, _ := json.Marshal(map[string]string{"name": "evaluation-service-auto"})
+	body, err := json.Marshal(map[string]string{"name": "evaluation-service-auto"})
+	if err != nil {
+		return "", fmt.Errorf("erro ao serializar payload para auth-service: %w", err)
+	}
 	
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body)) // #nosec G107,G704 -- URL interna controlada por ambiente do serviço
 	if err != nil {
 		return "", err
 	}
 	req.Header.Set("Authorization", "Bearer "+masterKey)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := client.Do(req)
+	resp, err := client.Do(req) // #nosec G704 -- destino restrito ao auth-service interno
 	if err != nil {
 		return "", err
 	}

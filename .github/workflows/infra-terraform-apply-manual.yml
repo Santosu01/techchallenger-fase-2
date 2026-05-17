@@ -1,0 +1,109 @@
+name: Terraform Apply Manual
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_apply:
+        description: "Type APPLY to confirm"
+        required: true
+        type: string
+
+jobs:
+  terraform_apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.confirm_apply == 'APPLY' }}
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      TF_VAR_eks_cluster_role_arn: ${{ secrets.TF_VAR_EKS_CLUSTER_ROLE_ARN }}
+      TF_VAR_eks_node_role_arn: ${{ secrets.TF_VAR_EKS_NODE_ROLE_ARN }}
+      TF_VAR_rds_master_username: ${{ secrets.TF_VAR_RDS_MASTER_USERNAME }}
+      TF_VAR_rds_master_password: ${{ secrets.TF_VAR_RDS_MASTER_PASSWORD }}
+    defaults:
+      run:
+        working-directory: infra/terraform
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ env.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform init
+        run: terraform init
+
+      - name: Terraform plan
+        run: terraform plan -no-color -out=tfplan -input=false
+
+      - name: Terraform apply
+        run: terraform apply -no-color -input=false -auto-approve tfplan
+
+      - name: AWS validation summary
+        shell: bash
+        run: |
+          set +e
+
+          CLUSTER_NAME="$(terraform output -raw eks_cluster_name 2>/dev/null)"
+          DYNAMODB_TABLE="$(terraform output -raw dynamodb_table_name 2>/dev/null)"
+          SQS_QUEUE_URL="$(terraform output -raw sqs_queue_url 2>/dev/null)"
+          REDIS_ENDPOINT="$(terraform output -raw redis_endpoint 2>/dev/null)"
+
+          {
+            echo "## Terraform Apply Summary"
+            echo
+            echo "- Region: \`${AWS_REGION}\`"
+            echo "- Cluster: \`${CLUSTER_NAME:-N/A}\`"
+            echo "- DynamoDB table: \`${DYNAMODB_TABLE:-N/A}\`"
+            echo "- SQS queue URL: \`${SQS_QUEUE_URL:-N/A}\`"
+            echo "- Redis endpoint: \`${REDIS_ENDPOINT:-N/A}\`"
+            echo
+            echo "### AWS Resource Validation"
+            echo
+            echo "| Resource | Validation |"
+            echo "|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ -n "$CLUSTER_NAME" ]; then
+            EKS_STATUS="$(aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" --query "cluster.status" --output text 2>/dev/null)"
+            NODEGROUPS="$(aws eks list-nodegroups --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" --query "nodegroups" --output text 2>/dev/null)"
+            echo "| EKS Cluster | \`${EKS_STATUS:-NOT_FOUND}\` |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| EKS Nodegroups | \`${NODEGROUPS:-NONE}\` |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "| EKS Cluster | \`N/A\` |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| EKS Nodegroups | \`N/A\` |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          RDS_STATUS="$(aws rds describe-db-instances --region "$AWS_REGION" --query "DBInstances[?contains(DBInstanceIdentifier, 'togglemaster')].[DBInstanceIdentifier,DBInstanceStatus]" --output text 2>/dev/null)"
+          REDIS_STATUS="$(aws elasticache describe-cache-clusters --show-cache-node-info --region "$AWS_REGION" --query "CacheClusters[?contains(CacheClusterId, 'togglemaster')].[CacheClusterId,CacheClusterStatus]" --output text 2>/dev/null)"
+          DYNAMO_STATUS="$(aws dynamodb list-tables --region "$AWS_REGION" --query "TableNames[?@=='$DYNAMODB_TABLE']" --output text 2>/dev/null)"
+          SQS_STATUS="$(aws sqs list-queues --queue-name-prefix togglemaster --region "$AWS_REGION" --query "QueueUrls" --output text 2>/dev/null)"
+          ECR_STATUS="$(aws ecr describe-repositories --region "$AWS_REGION" --query "repositories[?contains(repositoryName, 'service')].repositoryName" --output text 2>/dev/null)"
+
+          echo "| RDS Instances | \`${RDS_STATUS:-NOT_FOUND}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| ElastiCache | \`${REDIS_STATUS:-NOT_FOUND}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| DynamoDB | \`${DYNAMO_STATUS:-NOT_FOUND}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| SQS | \`${SQS_STATUS:-NOT_FOUND}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| ECR Repositories | \`${ECR_STATUS:-NOT_FOUND}\` |" >> "$GITHUB_STEP_SUMMARY"
+
+  rejected_apply:
+    name: Apply Rejected
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.confirm_apply != 'APPLY' }}
+    steps:
+      - name: Invalid confirmation
+        run: |
+          echo "Apply aborted. You must type APPLY exactly."
+          exit 1

@@ -1,0 +1,105 @@
+name: Terraform Destroy Manual
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_destroy:
+        description: "Type DESTROY to confirm"
+        required: true
+        type: string
+
+jobs:
+  terraform_destroy:
+    name: Terraform Destroy
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.confirm_destroy == 'DESTROY' }}
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      TF_VAR_eks_cluster_role_arn: ${{ secrets.TF_VAR_EKS_CLUSTER_ROLE_ARN }}
+      TF_VAR_eks_node_role_arn: ${{ secrets.TF_VAR_EKS_NODE_ROLE_ARN }}
+      TF_VAR_rds_master_username: ${{ secrets.TF_VAR_RDS_MASTER_USERNAME }}
+      TF_VAR_rds_master_password: ${{ secrets.TF_VAR_RDS_MASTER_PASSWORD }}
+    defaults:
+      run:
+        working-directory: infra/terraform
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Terraform init
+        run: terraform init
+
+      - name: Pre-clean ECR images
+        shell: bash
+        run: |
+          set +e
+          REPOS=$(aws ecr describe-repositories --region "${{ secrets.AWS_REGION }}" --query "repositories[?contains(repositoryName, 'service')].repositoryName" --output text 2>/dev/null)
+          if [ -z "$REPOS" ]; then
+            echo "No ECR repositories found to clean."
+            exit 0
+          fi
+
+          for repo in $REPOS; do
+            echo "Cleaning ECR repository: $repo"
+            IMAGE_IDS=$(aws ecr list-images --region "${{ secrets.AWS_REGION }}" --repository-name "$repo" --query "imageIds[*]" --output json 2>/dev/null)
+            if [ -n "$IMAGE_IDS" ] && [ "$IMAGE_IDS" != "[]" ]; then
+              aws ecr batch-delete-image --region "${{ secrets.AWS_REGION }}" --repository-name "$repo" --image-ids "$IMAGE_IDS" || true
+            else
+              echo "Repository $repo already empty."
+            fi
+          done
+
+      - name: Terraform destroy
+        run: terraform destroy -auto-approve -input=false
+
+      - name: AWS validation summary
+        shell: bash
+        run: |
+          set +e
+
+          EKS_CLUSTERS="$(aws eks list-clusters --region "$AWS_REGION" --query "clusters" --output text 2>/dev/null)"
+          RDS_LIST="$(aws rds describe-db-instances --region "$AWS_REGION" --query "DBInstances[?contains(DBInstanceIdentifier, 'togglemaster')].[DBInstanceIdentifier,DBInstanceStatus]" --output text 2>/dev/null)"
+          REDIS_LIST="$(aws elasticache describe-cache-clusters --show-cache-node-info --region "$AWS_REGION" --query "CacheClusters[?contains(CacheClusterId, 'togglemaster')].[CacheClusterId,CacheClusterStatus]" --output text 2>/dev/null)"
+          DYNAMO_LIST="$(aws dynamodb list-tables --region "$AWS_REGION" --query "TableNames[?@=='ToggleMasterAnalytics']" --output text 2>/dev/null)"
+          SQS_LIST="$(aws sqs list-queues --queue-name-prefix togglemaster --region "$AWS_REGION" --query "QueueUrls" --output text 2>/dev/null)"
+          ECR_LIST="$(aws ecr describe-repositories --region "$AWS_REGION" --query "repositories[?contains(repositoryName, 'service')].repositoryName" --output text 2>/dev/null)"
+
+          {
+            echo "## Terraform Destroy Summary"
+            echo
+            echo "- Region: \`${AWS_REGION}\`"
+            echo
+            echo "### AWS Resource Validation (Post-Destroy)"
+            echo
+            echo "| Resource | Status |"
+            echo "|---|---|"
+            echo "| EKS Clusters | \`${EKS_CLUSTERS:-EMPTY}\` |"
+            echo "| RDS (togglemaster) | \`${RDS_LIST:-EMPTY}\` |"
+            echo "| ElastiCache (togglemaster) | \`${REDIS_LIST:-EMPTY}\` |"
+            echo "| DynamoDB (ToggleMasterAnalytics) | \`${DYNAMO_LIST:-EMPTY}\` |"
+            echo "| SQS (togglemaster*) | \`${SQS_LIST:-EMPTY}\` |"
+            echo "| ECR (service repos) | \`${ECR_LIST:-EMPTY}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  rejected_destroy:
+    name: Destroy Rejected
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.confirm_destroy != 'DESTROY' }}
+    steps:
+      - name: Invalid confirmation
+        run: |
+          echo "Destroy aborted. You must type DESTROY exactly."
+          exit 1

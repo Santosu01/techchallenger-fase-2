@@ -9,25 +9,18 @@ services:
   analytics-app:
     build: .
     container_name: analytics-app
-
     networks:
       - infra-net
       - service-backbone
-
     depends_on:
       evaluation-app:
         condition: service_healthy
       localstack:
         condition: service_healthy
       shared-dynamodb:
-        condition: service_started
-
+        condition: service_healthy
     env_file:
       - .env
-
-    ports:
-      - "8006:8006"
-
     healthcheck:
       test:
         [

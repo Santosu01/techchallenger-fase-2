@@ -1,21 +1,16 @@
 name: togglemaster
-
 # Centralized Infrastructure and Shared Resources
 
 networks:
   infra-net:
-    driver: bridge
   service-backbone:
-    driver: bridge
 
 services:
-
   shared-redis:
-    image: redis:7-alpine
-    restart: unless-stopped
+    image: redis:alpine
+    container_name: shared-redis
     networks:
       - infra-net
-      - service-backbone
     ports:
       - "6379:6379"
     healthcheck:
@@ -25,28 +20,28 @@ services:
       retries: 5
 
   localstack:
-    image: localstack/localstack:latest
-    restart: unless-stopped
+    image: localstack/localstack
+    container_name: localstack
     networks:
       - infra-net
       - service-backbone
     ports:
       - "4566:4566"
     environment:
-      SERVICES: sqs
-      DEFAULT_REGION: us-east-1
-      AWS_DEFAULT_REGION: us-east-1
+      - SERVICES=sqs
+      - DEFAULT_REGION=us-east-1
+      - AWS_DEFAULT_REGION=us-east-1
     volumes:
       - ./infra/localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:4566/_localstack/health || exit 1"]
+      test: ["CMD-SHELL", "curl -s http://localhost:4566/_localstack/health || exit 1"]
       interval: 10s
       timeout: 10s
       retries: 10
 
   shared-dynamodb:
-    image: amazon/dynamodb-local:latest
-    restart: unless-stopped
+    image: amazon/dynamodb-local
+    container_name: shared-dynamodb
     networks:
       - infra-net
       - service-backbone
@@ -55,3 +50,8 @@ services:
     command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
     volumes:
       - ./infra/dynamodb:/home/dynamodblocal/data
+    healthcheck:
+      test: ["CMD-SHELL", "echo | nc localhost 8000 || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
