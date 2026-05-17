@@ -2,12 +2,12 @@ name: Terraform Validate Plan
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, Fase3]
     paths:
       - "infra/terraform/**"
       - ".github/workflows/infra-terraform-ci.yml"
   push:
-    branches: [main]
+    branches: [main, Fase3]
     paths:
       - "infra/terraform/**"
       - ".github/workflows/infra-terraform-ci.yml"

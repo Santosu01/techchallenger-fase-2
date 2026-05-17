@@ -2,7 +2,7 @@ name: Targeting Service CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, Fase3]
     paths:
       - "backend-services/targeting-service/**"
       - ".github/workflows/targeting-service-ci.yml"
