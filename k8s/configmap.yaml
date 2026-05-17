@@ -5,11 +5,11 @@ metadata:
   namespace: togglemaster
 data:
   # Database hosts (RDS)
-  AUTH_DB_HOST: "togglemaster-auth.c36kciuseu7k.us-east-1.rds.amazonaws.com"
-  FLAG_DB_HOST: "togglemaster-flags.c36kciuseu7k.us-east-1.rds.amazonaws.com"
-  TARGETING_DB_HOST: "togglemaster-targeting.c36kciuseu7k.us-east-1.rds.amazonaws.com"
-  REDIS_HOST: "togglemaster-cache-6cviqx.serverless.use1.cache.amazonaws.com:6379"
-  REDIS_TLS: "true"
+  AUTH_DB_HOST: "togglemaster-homolog-auth-db.crrt0vlsapwt.us-east-1.rds.amazonaws.com"
+  FLAG_DB_HOST: "togglemaster-homolog-flag-db.crrt0vlsapwt.us-east-1.rds.amazonaws.com"
+  TARGETING_DB_HOST: "togglemaster-homolog-targeting-db.crrt0vlsapwt.us-east-1.rds.amazonaws.com"
+  REDIS_HOST: "togglemaster-homolog-redis.q8dfs1.0001.use1.cache.amazonaws.com:6379"
+  REDIS_TLS: "false"
   # URLs de servicos internos (comunicacao entre microservicos)
   AUTH_SERVICE_URL: "http://auth-service:8001"
   FLAG_SERVICE_URL: "http://flag-service:8002"
@@ -18,5 +18,5 @@ data:
   ANALYTICS_SERVICE_URL: "http://analytics-service:8005"
   # Configuracoes AWS
   AWS_REGION: "us-east-1"
-  AWS_SQS_URL: "https://sqs.us-east-1.amazonaws.com/154367514500/togglemaster-analytics-queue"
+  AWS_SQS_URL: "https://sqs.us-east-1.amazonaws.com/242980968921/togglemaster-analytics-queue"
   AWS_DYNAMODB_TABLE: "ToggleMasterAnalytics"

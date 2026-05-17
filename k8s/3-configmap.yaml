@@ -5,14 +5,14 @@ metadata:
   namespace: togglemaster
 data:
   # Database hosts (RDS)
-  AUTH_DB_HOST: "togglemaster-auth.c36kciuseu7k.us-east-1.rds.amazonaws.com"
-  FLAG_DB_HOST: "togglemaster-flags.c36kciuseu7k.us-east-1.rds.amazonaws.com"
-  TARGETING_DB_HOST: "togglemaster-targeting.c36kciuseu7k.us-east-1.rds.amazonaws.com"
+  AUTH_DB_HOST: "togglemaster-homolog-auth-db.crrt0vlsapwt.us-east-1.rds.amazonaws.com"
+  FLAG_DB_HOST: "togglemaster-homolog-flag-db.crrt0vlsapwt.us-east-1.rds.amazonaws.com"
+  TARGETING_DB_HOST: "togglemaster-homolog-targeting-db.crrt0vlsapwt.us-east-1.rds.amazonaws.com"
   
   # Cache (ElastiCache Serverless Redis with TLS)
-  REDIS_HOST: "togglemaster-cache-6cviqx.serverless.use1.cache.amazonaws.com:6379"
-  REDIS_TLS: "true"
-  REDIS_URL: "redis://togglemaster-cache-6cviqx.serverless.use1.cache.amazonaws.com:6379"
+  REDIS_HOST: "togglemaster-homolog-redis.q8dfs1.0001.use1.cache.amazonaws.com:6379"
+  REDIS_TLS: "false"
+  REDIS_URL: "redis://togglemaster-homolog-redis.q8dfs1.0001.use1.cache.amazonaws.com:6379"
   
   # URLs de servicos internos (comunicacao entre microservicos)
   AUTH_SERVICE_URL: "http://auth-service:8001"
@@ -23,7 +23,7 @@ data:
   
   # Configuracoes AWS
   AWS_REGION: "us-east-1"
-  AWS_SQS_URL: "https://sqs.us-east-1.amazonaws.com/154367514500/togglemaster-analytics-queue"
+  AWS_SQS_URL: "https://sqs.us-east-1.amazonaws.com/242980968921/togglemaster-analytics-queue"
   AWS_DYNAMODB_TABLE: "ToggleMasterAnalytics"
   
   # Endpoints AWS (vazio para producao, preencher para LocalStack)
@@ -31,6 +31,6 @@ data:
   AWS_DYNAMODB_ENDPOINT_URL: ""
   
   # Database connection strings (constructed with actual host values)
-  AUTH_DATABASE_URL: "postgres://postgres:Togglemaster123@togglemaster-auth.c36kciuseu7k.us-east-1.rds.amazonaws.com:5432/auth_db"
-  FLAG_DATABASE_URL: "postgres://postgres:Togglemaster123@togglemaster-flags.c36kciuseu7k.us-east-1.rds.amazonaws.com:5432/flags_db"
-  TARGETING_DATABASE_URL: "postgres://postgres:Togglemaster123@togglemaster-targeting.c36kciuseu7k.us-east-1.rds.amazonaws.com:5432/targeting_db"
+  AUTH_DATABASE_URL: "postgres://postgres:Togglemaster123@togglemaster-homolog-auth-db.crrt0vlsapwt.us-east-1.rds.amazonaws.com:5432/auth_db"
+  FLAG_DATABASE_URL: "postgres://postgres:Togglemaster123@togglemaster-homolog-flag-db.crrt0vlsapwt.us-east-1.rds.amazonaws.com:5432/flags_db"
+  TARGETING_DATABASE_URL: "postgres://postgres:Togglemaster123@togglemaster-homolog-targeting-db.crrt0vlsapwt.us-east-1.rds.amazonaws.com:5432/targeting_db"
